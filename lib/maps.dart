@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'tabs.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'map_screen.dart'; // Import the new Dart file
+
+void main() {
+  runApp(MaterialApp(
+    home: MapsScreen(),
+  ));
+}
 
 class MapsScreen extends StatefulWidget {
   @override
@@ -14,13 +20,7 @@ class _MapsScreenState extends State<MapsScreen> {
       appBar: AppBar(
         title: Text('Tu app de Talcahuano'),
       ),
-      body: TabBarDemo(),
+      body: MapScreen(), // Use the new MapScreen widget
     );
   }
-}
-
-void main() {
-  runApp(MaterialApp(
-    home: MapsScreen(),
-  ));
 }
