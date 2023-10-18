@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-import 'tabs.dart';
 import 'map_screen.dart'; // Import the new Dart file
-
-void main() {
-  runApp(MaterialApp(
-    home: MapsScreen(),
-  ));
-}
+import 'tabs.dart';
+import 'package:provider/provider.dart';
+import 'dark_mode_manager.dart';
 
 class MapsScreen extends StatefulWidget {
   @override
@@ -16,11 +12,24 @@ class MapsScreen extends StatefulWidget {
 class _MapsScreenState extends State<MapsScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Tu app de Talcahuano'),
+    final darkModeManager = Provider.of<DarkModeManager>(context); // Use Provider.of
+
+    final lightTheme = ThemeData.light();
+    final darkTheme = ThemeData.dark();
+
+    final theme = darkModeManager.darkModeEnabled ? darkTheme : lightTheme;
+
+    return MaterialApp(
+      theme: theme,
+      debugShowCheckedModeBanner: false,
+
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Tu app de Talcahuano'),
+        ),
+        drawer: buildDrawer(context),
+        body: MapScreen(), // Use the new MapScreen widget
       ),
-      body: MapScreen(), // Use the new MapScreen widget
     );
   }
 }

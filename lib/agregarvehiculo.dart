@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'tabs.dart';
+import 'package:provider/provider.dart';
+import 'dark_mode_manager.dart';
 
 class AgregarVehiculosScreen extends StatefulWidget {
   @override
@@ -6,7 +9,7 @@ class AgregarVehiculosScreen extends StatefulWidget {
 }
 
 class _AgregarVehiculosScreenState extends State<AgregarVehiculosScreen> {
-  // Variables para los campos de entrada
+  // Variables for input fields
   TextEditingController _marcaController = TextEditingController();
   TextEditingController _modeloController = TextEditingController();
   TextEditingController _anioController = TextEditingController();
@@ -14,75 +17,88 @@ class _AgregarVehiculosScreenState extends State<AgregarVehiculosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Agregar Vehículo'),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Campo de marca
-            TextFormField(
-              controller: _marcaController,
-              decoration: InputDecoration(labelText: 'Marca'),
+    return Consumer<DarkModeManager>(
+      builder: (context, darkModeManager, child) {
+        final lightTheme = ThemeData.light();
+        final darkTheme = ThemeData.dark();
+
+        final theme = darkModeManager.darkModeEnabled ? darkTheme : lightTheme;
+
+        return Theme(
+          data: theme, // Apply the theme to this screen
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text('Agregar Vehículo'),
             ),
+            body: SingleChildScrollView(
+              padding: EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Marca field
+                  TextFormField(
+                    controller: _marcaController,
+                    decoration: InputDecoration(labelText: 'Marca'),
+                  ),
 
-            SizedBox(height: 20),
+                  SizedBox(height: 20),
 
-            // Campo de modelo
-            TextFormField(
-              controller: _modeloController,
-              decoration: InputDecoration(labelText: 'Modelo'),
-            ),
+                  // Modelo field
+                  TextFormField(
+                    controller: _modeloController,
+                    decoration: InputDecoration(labelText: 'Modelo'),
+                  ),
 
-            SizedBox(height: 20),
+                  SizedBox(height: 20),
 
-            // Campo de año
-            TextFormField(
-              controller: _anioController,
-              decoration: InputDecoration(labelText: 'Año'),
-            ),
+                  // Año field
+                  TextFormField(
+                    controller: _anioController,
+                    decoration: InputDecoration(labelText: 'Año'),
+                  ),
 
-            SizedBox(height: 20),
+                  SizedBox(height: 20),
 
-            // Campo de placa
-            TextFormField(
-              controller: _placaController,
-              decoration: InputDecoration(labelText: 'Patente'),
-            ),
+                  // Placa field
+                  TextFormField(
+                    controller: _placaController,
+                    decoration: InputDecoration(labelText: 'Patente'),
+                  ),
 
-            SizedBox(height: 20),
+                  SizedBox(height: 20),
 
-            // Botón para agregar vehículo
-            ElevatedButton(
-              onPressed: () {
-                // Tu lógica para agregar el vehículo aquí
-                String marca = _marcaController.text;
-                String modelo = _modeloController.text;
-                String anio = _anioController.text;
-                String placa = _placaController.text;
+                  // Button to add vehicle
+                  ElevatedButton(
+                    onPressed: () {
+                      // Your logic to add the vehicle here
+                      String marca = _marcaController.text;
+                      String modelo = _modeloController.text;
+                      String anio = _anioController.text;
+                      String placa = _placaController.text;
 
-                // Realiza la lógica para agregar el vehículo, por ejemplo, enviar los datos a una base de datos.
+                      // Perform the logic to add the vehicle, such as sending the data to a database.
 
-                // Después de agregar el vehículo, puedes realizar una acción adicional, como navegar a la pantalla de inicio o mostrar un mensaje de éxito.
-              },
-              style: ElevatedButton.styleFrom(
-                primary: Colors.blue, // Color azul
-                onPrimary: Colors.white, // Texto blanco
+                      // After adding the vehicle, you can perform additional actions, such as navigating to the home screen or displaying a success message.
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.blue, // Blue color
+                      onPrimary: Colors.white, // White text
+                    ),
+                    child: Text('Agregar Vehículo'),
+                  ),
+                ],
               ),
-              child: Text('Agregar Vehículo'),
             ),
-          ],
-        ),
-      ),
+            drawer: buildDrawer(context),
+          ),
+        );
+      },
     );
   }
 
   @override
   void dispose() {
-    // Liberar los controladores al cerrar la pantalla para evitar fugas de memoria.
+    // Dispose of controllers to prevent memory leaks.
     _marcaController.dispose();
     _modeloController.dispose();
     _anioController.dispose();

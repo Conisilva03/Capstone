@@ -1,52 +1,62 @@
 import 'package:flutter/material.dart';
+import 'tabs.dart';
+import 'package:provider/provider.dart'; // Import the provider package
+import 'main.dart'; // Import your main.dart where DarkModeManager is defined
+import 'dark_mode_manager.dart'; 
 
-class ConfiguracionScreen extends StatefulWidget {
-  @override
-  _ConfiguracionScreenState createState() => _ConfiguracionScreenState();
-}
-
-class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
-  bool _darkModeEnabled =
-      false; // Variable para controlar el estado del modo oscuro
-
+class ConfiguracionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // Definir los temas claro y oscuro
+    final darkModeManager = Provider.of<DarkModeManager>(context); // Use Provider.of
+
     final lightTheme = ThemeData.light();
     final darkTheme = ThemeData.dark();
 
-    // Aplicar el tema actual basado en el estado del modo oscuro
-    final theme = _darkModeEnabled ? darkTheme : lightTheme;
+    final theme = darkModeManager.darkModeEnabled ? darkTheme : lightTheme;
 
     return MaterialApp(
-      theme: theme, // Aplicar el tema
+      debugShowCheckedModeBanner: false,
+
+      theme: theme,
       home: Scaffold(
+        
         appBar: AppBar(
           title: Text('Configuración'),
+          actions: [
+            IconButton(
+              icon: Icon(
+                darkModeManager.darkModeEnabled
+                    ? Icons.light_mode
+                    : Icons.dark_mode,
+              ),
+              onPressed: () {
+                darkModeManager.toggleDarkMode();
+              },
+            ),
+          ],
         ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Botón para activar/desactivar el modo oscuro
               ElevatedButton(
                 onPressed: () {
-                  setState(() {
-                    // Cambiar el estado del modo oscuro
-                    _darkModeEnabled = !_darkModeEnabled;
-                  });
+                  darkModeManager.toggleDarkMode();
                 },
                 style: ElevatedButton.styleFrom(
-                  primary: Colors.blue, // Color azul
-                  onPrimary: Colors.white, // Texto blanco
+                  primary: Colors.blue,
+                  onPrimary: Colors.white,
                 ),
                 child: Text(
-                  _darkModeEnabled ? 'Modo Claro' : 'Modo Oscuro',
+                  darkModeManager.darkModeEnabled
+                      ? 'Modo Claro'
+                      : 'Modo Oscuro',
                 ),
               ),
             ],
           ),
         ),
+        drawer: buildDrawer(context),
       ),
     );
   }

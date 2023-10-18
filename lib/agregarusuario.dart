@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'dark_mode_manager.dart';
+import 'tabs.dart';
 
 class AgregarUsuarioScreen extends StatefulWidget {
   @override
@@ -6,82 +9,93 @@ class AgregarUsuarioScreen extends StatefulWidget {
 }
 
 class _AgregarUsuarioScreenState extends State<AgregarUsuarioScreen> {
-  // Variables para los campos de entrada
+  // Variables for input fields
   TextEditingController _nombreController = TextEditingController();
   TextEditingController _correoController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Invitar Amigos'),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Campo de nombre
-            TextFormField(
-              controller: _nombreController,
-              decoration: InputDecoration(labelText: 'Nombre'),
+    return Consumer<DarkModeManager>(
+      builder: (context, darkModeManager, child) {
+        final lightTheme = ThemeData.light();
+        final darkTheme = ThemeData.dark();
+
+        final theme = darkModeManager.darkModeEnabled ? darkTheme : lightTheme;
+
+        return Theme(
+          data: theme, // Apply the theme to this screen
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text('Invitar Amigos'),
             ),
+            body: SingleChildScrollView(
+              padding: EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Name field
+                  TextFormField(
+                    controller: _nombreController,
+                    decoration: InputDecoration(labelText: 'Nombre'),
+                  ),
 
-            SizedBox(height: 20),
+                  SizedBox(height: 20),
 
-            // Campo de correo electrónico
-            TextFormField(
-              controller: _correoController,
-              decoration: InputDecoration(labelText: 'Correo Electrónico'),
-            ),
+                  // Email field
+                  TextFormField(
+                    controller: _correoController,
+                    decoration: InputDecoration(labelText: 'Correo Electrónico'),
+                  ),
 
-            SizedBox(height: 20),
+                  SizedBox(height: 20),
 
-            // Recuadro de mensaje
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(5.0),
+                  // Message box
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(5.0),
+                    ),
+                    padding: EdgeInsets.all(10.0),
+                    child: Text(
+                      'Querido amig@ de Parking App, te invito a unirte a nuestra comunidad!',
+                      style: TextStyle(
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 20),
+
+                  // Invite friend button
+                  ElevatedButton(
+                    onPressed: () {
+                      // Show a snackbar with "Próximamente" message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Funcionalidad Próximamente Disponible'),
+                          duration: Duration(seconds: 2), // Duration for which the snackbar is displayed
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.blue, // Blue color
+                      onPrimary: Colors.white, // White text
+                    ),
+                    child: Text('Invitar Amigo'),
+                  ),
+                ],
               ),
-              padding: EdgeInsets.all(10.0),
-              child: Text(
-                'Querido amig@ de Parking App, te invito a unirte a nuestra comunidad!',
-                style: TextStyle(
-                  fontSize: 16,
-                ),
-              ),
             ),
-
-            SizedBox(height: 20),
-
-            // Botón para invitar amigo
-            ElevatedButton(
-              onPressed: () {
-                // Tu lógica para agregar el usuario aquí
-                String nombre = _nombreController.text;
-                String correo = _correoController.text;
-
-                // Realizar la lógica para agregar el usuario, por ejemplo, enviar los datos a una base de datos.
-
-                // Después de agregar el usuario, puedes navegar a la pantalla de inicio o a donde desees.
-                Navigator.pop(
-                    context); // Esto regresará a la pantalla anterior.
-              },
-              style: ElevatedButton.styleFrom(
-                primary: Colors.blue, // Color azul
-                onPrimary: Colors.white, // Texto blanco
-              ),
-              child: Text('Invitar Amigo'),
-            ),
-          ],
-        ),
-      ),
+            drawer: buildDrawer(context),
+          ),
+        );
+      },
     );
   }
 
   @override
   void dispose() {
-    // Liberar los controladores al cerrar la pantalla para evitar fugas de memoria.
+    // Dispose of controllers to prevent memory leaks.
     _nombreController.dispose();
     _correoController.dispose();
     super.dispose();

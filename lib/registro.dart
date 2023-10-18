@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert'; // Import for JSON encoding
 
 class RegistroScreen extends StatefulWidget {
   @override
@@ -7,15 +9,10 @@ class RegistroScreen extends StatefulWidget {
 
 class _RegistroScreenState extends State<RegistroScreen> {
   final TextEditingController nombreController = TextEditingController();
-  final TextEditingController apellidoController = TextEditingController();
   final TextEditingController correoController = TextEditingController();
-  final TextEditingController rutController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController repeatPasswordController =
-      TextEditingController();
 
-  bool aceptaTerminos =
-      false; // Para rastrear si el checkbox está marcado o desmarcado
+  bool aceptaTerminos = false;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +25,6 @@ class _RegistroScreenState extends State<RegistroScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Logo en la parte superior
             Image.asset(
               'assets/logo.png',
               height: 100,
@@ -37,7 +33,6 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
             SizedBox(height: 20),
 
-            // Encabezado
             Text(
               'Registrarse',
               style: TextStyle(
@@ -48,22 +43,13 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
             SizedBox(height: 20),
 
-            // Formulario de registro
             TextFormField(
               controller: nombreController,
               decoration: InputDecoration(labelText: 'Nombre'),
             ),
             TextFormField(
-              controller: apellidoController,
-              decoration: InputDecoration(labelText: 'Apellido'),
-            ),
-            TextFormField(
               controller: correoController,
               decoration: InputDecoration(labelText: 'Correo Electrónico'),
-            ),
-            TextFormField(
-              controller: rutController,
-              decoration: InputDecoration(labelText: 'RUT'),
             ),
             _buildPasswordTextField(
               labelText: 'Contraseña',
@@ -74,19 +60,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 });
               },
             ),
-            _buildPasswordTextField(
-              labelText: 'Repetir Contraseña',
-              obscureText: _obscureRepeatPassword,
-              onPressedIcon: () {
-                setState(() {
-                  _obscureRepeatPassword = !_obscureRepeatPassword;
-                });
-              },
-            ),
 
             SizedBox(height: 20),
 
-            // Checkbox de aceptación de términos y condiciones
             Row(
               children: [
                 Checkbox(
@@ -103,24 +79,42 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
             SizedBox(height: 20),
 
-            // Botón de registro
             ElevatedButton(
-              onPressed: () {
-                // Verificar si se aceptaron los términos y condiciones
+              onPressed: () async {
                 if (aceptaTerminos) {
-                  // Puedes acceder a los valores ingresados en los campos de texto
                   final nombre = nombreController.text;
-                  final apellido = apellidoController.text;
                   final correo = correoController.text;
-                  final rut = rutController.text;
                   final password = passwordController.text;
-                  final repeatPassword = repeatPasswordController.text;
 
-                  // Realiza la lógica de registro aquí
-                  // Luego, navega de vuelta a la pantalla principal (main.dart)
-                  Navigator.pop(context);
+                  // Create a JSON body with the specified fields
+                  final Map<String, String> requestBody = {
+                    'username': nombre,
+                    'email': correo,
+                    'hashed_password': password,
+                  };
+
+                  // Make a POST request to register the user
+                  final response = await http.post(
+                    Uri.parse('http://0.0.0.0:8000/users/'), // Use the correct endpoint
+                    headers: <String, String>{
+                      'Content-Type': 'application/json', // Use JSON content type
+                    },
+                    body: jsonEncode(requestBody), // Encode the JSON body
+                  );
+
+                  if (response.statusCode == 200) {
+                    // Registration successful
+                    Navigator.pop(context); // Navigate back to login screen
+                  } else {
+                    // Registration failed
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Registration failed. Please try again.'),
+                      ),
+                    );
+                  }
                 } else {
-                  // Muestra un mensaje de error si no se aceptaron los términos y condiciones
+                  // Show an error message if terms are not accepted
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
@@ -130,23 +124,21 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                primary: Colors.blue, // Color azul
-                onPrimary: Colors.white, // Texto blanco
+                primary: Colors.blue,
+                onPrimary: Colors.white,
               ),
               child: Text('Registrarse'),
             ),
 
             SizedBox(height: 20),
 
-            // Texto de "ya tienes cuenta"
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text('¿Ya tienes cuenta?'),
                 TextButton(
                   onPressed: () {
-                    // Tu lógica para navegar a la pantalla de inicio de sesión aquí
-                    Navigator.pop(context);
+                    Navigator.pop(context); // Navigate back to login screen
                   },
                   child: Text('Ingresar'),
                 ),
@@ -158,9 +150,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
     );
   }
 
-  bool _obscurePassword = true; // Para ocultar/mostrar la contraseña
-  bool _obscureRepeatPassword =
-      true; // Para ocultar/mostrar la contraseña de repetición
+  bool _obscurePassword = true;
 
   Widget _buildPasswordTextField({
     required String labelText,
@@ -168,7 +158,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
     required VoidCallback onPressedIcon,
   }) {
     return TextFormField(
-      controller: obscureText ? passwordController : repeatPasswordController,
+      controller: passwordController,
       obscureText: obscureText,
       decoration: InputDecoration(
         labelText: labelText,

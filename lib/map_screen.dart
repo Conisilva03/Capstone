@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:geolocator/geolocator.dart';
 
 class MapScreen extends StatefulWidget {
   @override
@@ -10,19 +11,24 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-
-    LatLng? selectedMarkerLocation;
+  LatLng? selectedMarkerLocation;
+  Position? currentLocation;
 
   List<LatLng> parkingSpaceLocations = [];
+  List<LatLng> filteredParkingSpaceLocations = [];
+
+  TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     fetchData();
+    getCurrentLocation();
+
   }
 
   Future<void> fetchData() async {
-    final response = await http.get(Uri.parse('http://localhost:8000/parking_spaces'));
+    final response = await http.get(Uri.parse('https://api1.marweg.cl/parking_spaces'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -32,78 +38,125 @@ class _MapScreenState extends State<MapScreen> {
 
       setState(() {
         parkingSpaceLocations = locations;
+        filteredParkingSpaceLocations = locations;
       });
     } else {
       throw Exception('Failed to load data');
     }
   }
 
-  void _showMarkerInfo(BuildContext context, LatLng location) {
-  final selectedParkingSpace = parkingSpaceLocations.firstWhere(
-    (LatLng parkingSpace) =>
-        parkingSpace.latitude == location.latitude &&
-        parkingSpace.longitude == location.longitude,
-  );
+  Future<void> getCurrentLocation() async {
+  try {
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
 
-  showModalBottomSheet(
-    context: context,
-    builder: (context) {
-      return Container(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Parking Space Information',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8.0),
-            Text('Latitude: ${selectedParkingSpace.latitude}'),
-            Text('Longitude: ${selectedParkingSpace.longitude}'),
-            // Add more information as needed
-          ],
-        ),
-      );
-    },
-  );
+    setState(() {
+      currentLocation = position;
+    });
+  } catch (e) {
+    print(e);
+  }
 }
 
 
+  void _showMarkerInfo(BuildContext context, LatLng location) {
+    final selectedParkingSpace = parkingSpaceLocations.firstWhere(
+      (LatLng parkingSpace) =>
+          parkingSpace.latitude == location.latitude &&
+          parkingSpace.longitude == location.longitude,
+    );
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Parking Space Information',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8.0),
+              
+             
+              Text('Longitude: ${selectedParkingSpace.longitude}'),
+              Text('Latitude: ${selectedParkingSpace.latitude}'),
+              // Add more information as needed
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void filterParkingSpaces(String query) {
+    setState(() {
+      filteredParkingSpaceLocations = parkingSpaceLocations
+          .where((location) =>
+              location.toString().toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return FlutterMap(
-      options: MapOptions(
-        center: LatLng(-36.827, -73.050), // Coordinates of Concepción, Chile
-        zoom: 12.0, // Adjust the zoom level as needed
-      ),
+    return Column(
       children: [
-        TileLayer(
-          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-          subdomains: ['a', 'b', 'c'],
+        Padding(
+          padding: EdgeInsets.all(16.0),
+          child: TextField(
+            controller: searchController,
+            onChanged: (query) {
+              filterParkingSpaces(query);
+            },
+            decoration: InputDecoration(
+              labelText: 'Buscar Espacios de Estacionamiento',
+              border: OutlineInputBorder(),
+            ),
+          ),
         ),
-        MarkerLayer(
-            markers: parkingSpaceLocations
-                .map<Marker>((LatLng location) => Marker(
-                      point: location,
-                      width: 80,
-                      height: 80,
-                      builder: (context) => GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedMarkerLocation = location;
-                          });
-                          _showMarkerInfo(context, location);
-                        },
-                        child: Icon(
-                          Icons.local_parking,
-                          color: selectedMarkerLocation == location
-                              ? Colors.red
-                              : Colors.blue,
-                          size: 48.0,
-                        ),
-                      ),
-                    ))
-                .toList(),
+        Expanded(
+          child: FlutterMap(
+            options: MapOptions(
+              center: currentLocation != null
+                  ? LatLng(currentLocation!.latitude, currentLocation!.longitude)
+                  : LatLng(-36.714658, -73.114729), // Default center coordinates
+              zoom: 15.0,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                subdomains: ['a', 'b', 'c'],
+              ),
+              MarkerLayer(
+                markers: filteredParkingSpaceLocations
+                    .map<Marker>((LatLng location) => Marker(
+                          point: location,
+                          width: 80,
+                          height: 80,
+                          builder: (context) => GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedMarkerLocation = location;
+                              });
+                              _showMarkerInfo(context, location);
+                            },
+                            child: Icon(
+                              Icons.directions_car ,
+                              color: selectedMarkerLocation == location
+                                  ? Colors.red
+                                  : Colors.blue,
+                              size: 48.0,
+                            ),
+                          ),
+                        ))
+                    .toList(),
+              ),
+            ],
+          ),
         ),
       ],
     );

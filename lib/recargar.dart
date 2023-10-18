@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'tabs.dart';
+import 'package:provider/provider.dart';
+import 'dark_mode_manager.dart';
+
 
 class RecargarDineroScreen extends StatefulWidget {
   @override
@@ -82,6 +86,7 @@ class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
           ],
         ),
       ),
+      drawer: buildDrawer(context),
     );
   }
 

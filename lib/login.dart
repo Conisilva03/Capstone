@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'maps.dart';
+import 'inicio.dart';
+import 'package:http/http.dart' as http;
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -7,13 +9,79 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool _obscurePassword = true; // Para ocultar/mostrar la contraseña
+  bool _obscurePassword = true;
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
 
   void _togglePasswordVisibility() {
-    // Cambiar la visibilidad de la contraseña
     setState(() {
       _obscurePassword = !_obscurePassword;
     });
+  }
+
+  void _handleLogin() async {
+    final email = emailController.text;
+    final password = passwordController.text;
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://api2.parkingtalcahuano.cl/login'), // Replace with your FastAPI server URL
+        headers: <String, String>{
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'username': email,
+          'password': password,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final token = response.body; // Assuming the response body contains the JWT token
+        // Save the token or use it for authentication
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => InicioScreen()),
+        );
+      } else {
+        // Handle login failure (display an error message, for example)
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Inicio de Sesion Fallido'),
+              content: Text('Email o contrasena invalida. Por favor intente de nuevo.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    } catch (e) {
+      // Handle any network or server errors
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Error'),
+            content: Text('Un error ocurrio durante el login.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   @override
@@ -21,24 +89,19 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Ingresar'),
-        backgroundColor:
-            Colors.blue, // Cambiar el color del fondo del encabezado
+        backgroundColor: Colors.blue,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Logo en la parte superior
             Image.asset(
               'assets/logo.png',
               height: 100,
               width: 100,
             ),
-
             SizedBox(height: 20),
-
-            // Encabezado "Ingresar"
             Text(
               'Ingresar',
               style: TextStyle(
@@ -47,10 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             SizedBox(height: 10),
-
-            // Mensaje de bienvenida
             Text(
               '¡Hola, un placer volver a verte!',
               style: TextStyle(
@@ -58,48 +118,29 @@ class _LoginScreenState extends State<LoginScreen> {
                 color: Colors.black,
               ),
             ),
-
             SizedBox(height: 20),
-
-            // Formulario de inicio de sesión
             TextFormField(
+              controller: emailController,
               decoration: InputDecoration(labelText: 'Correo Electrónico'),
             ),
-
             SizedBox(height: 20),
-
-            // Campo de contraseña con botón para mostrar/ocultar
-            _buildPasswordTextField(),
-
+            _buildPasswordTextField(passwordController),
             SizedBox(height: 20),
-
-            // Botón de "Ingresar"
             ElevatedButton(
-              onPressed: () {
-                // Navegar a la pantalla de mapas (maps.dart)
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          MapsScreen()), // Reemplaza MapsScreen con el nombre correcto de tu clase de pantalla de mapas
-                );
-              },
+              onPressed: _handleLogin,
               style: ElevatedButton.styleFrom(
-                primary: Colors.blue, // Color azul
-                onPrimary: Colors.white, // Texto blanco
+                primary: Colors.blue,
+                onPrimary: Colors.white,
               ),
               child: Text('Ingresar'),
             ),
-
             SizedBox(height: 20),
-
-            // Enlace para "Olvidó su contraseña?" y "Registrarse"
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 GestureDetector(
                   onTap: () {
-                    // Tu lógica para "Olvidó su contraseña?" aquí
+                    // Handle forgot password logic
                   },
                   child: Text(
                     'Olvidó su contraseña?',
@@ -112,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 GestureDetector(
                   onTap: () {
-                    // Navegar a la pantalla de registro (registro.dart)
+                    // Navigate to the registration screen
                     Navigator.pushNamed(context, '/registrarse');
                   },
                   child: Text(
@@ -132,8 +173,9 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildPasswordTextField() {
+  Widget _buildPasswordTextField(TextEditingController controller) {
     return TextFormField(
+      controller: controller,
       obscureText: _obscurePassword,
       decoration: InputDecoration(
         labelText: 'Contraseña',
