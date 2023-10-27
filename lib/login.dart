@@ -3,6 +3,8 @@ import 'maps.dart';
 import 'inicio.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'olvidocontrasena.dart';
+import 'registro.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -148,7 +150,12 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 GestureDetector(
                   onTap: () {
-                    // Handle forgot password logic
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OlvidoContrasenaScreen(),
+                      ),
+                    );
                   },
                   child: Text(
                     'Olvidó su contraseña?',
@@ -161,8 +168,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 GestureDetector(
                   onTap: () {
-                    // Navigate to the registration screen
-                    Navigator.pushNamed(context, '/registrarse');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RegistroScreen(),
+                      ),
+                    );
                   },
                   child: Text(
                     'Registrarse',

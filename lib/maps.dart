@@ -12,7 +12,8 @@ class MapsScreen extends StatefulWidget {
 class _MapsScreenState extends State<MapsScreen> {
   @override
   Widget build(BuildContext context) {
-    final darkModeManager = Provider.of<DarkModeManager>(context); // Use Provider.of
+    final darkModeManager =
+        Provider.of<DarkModeManager>(context); // Use Provider.of
 
     final lightTheme = ThemeData.light();
     final darkTheme = ThemeData.dark();
@@ -22,10 +23,9 @@ class _MapsScreenState extends State<MapsScreen> {
     return MaterialApp(
       theme: theme,
       debugShowCheckedModeBanner: false,
-
       home: Scaffold(
         appBar: AppBar(
-          title: Text('Tu app de Talcahuano'),
+          title: Text('Selecciona Tu Estacionamiento!!'),
         ),
         drawer: buildDrawer(context),
         body: MapScreen(), // Use the new MapScreen widget

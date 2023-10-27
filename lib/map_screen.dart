@@ -4,18 +4,37 @@ import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:geolocator/geolocator.dart';
+import 'reservar.dart';
 
 class MapScreen extends StatefulWidget {
   @override
   _MapScreenState createState() => _MapScreenState();
 }
 
+class ParkingSpace {
+  final String id;
+  final LatLng location;
+  final String name;
+  final String description;
+  final String coordinates;
+  final bool state;
+
+  ParkingSpace(
+    this.id,
+    this.location,
+    this.name,
+    this.description,
+    this.coordinates,
+    this.state,
+  );
+}
+
 class _MapScreenState extends State<MapScreen> {
   LatLng? selectedMarkerLocation;
   Position? currentLocation;
 
-  List<LatLng> parkingSpaceLocations = [];
-  List<LatLng> filteredParkingSpaceLocations = [];
+  List<ParkingSpace> parkingSpaceLocations = [];
+  List<ParkingSpace> filteredParkingSpaceLocations = [];
 
   TextEditingController searchController = TextEditingController();
 
@@ -24,49 +43,53 @@ class _MapScreenState extends State<MapScreen> {
     super.initState();
     fetchData();
     getCurrentLocation();
-
   }
 
   Future<void> fetchData() async {
-    final response = await http.get(Uri.parse('https://api1.marweg.cl/parking_spaces'));
+    try {
+      final response = await http.get(Uri.parse(
+          'https://api1.marweg.cl/parking_spaces')); // Asegúrate de tener la URL correcta aquí
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final List<LatLng> locations = data.map<LatLng>((parkingSpace) {
-        return LatLng(parkingSpace['latitude'], parkingSpace['longitude']);
-      }).toList();
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<ParkingSpace> parkingSpaces =
+            (data as List<dynamic>).map((parkingSpace) {
+          return ParkingSpace(
+              parkingSpace['id'],
+              LatLng(parkingSpace['latitude'], parkingSpace['longitude']),
+              parkingSpace['name'],
+              parkingSpace['description'],
+              parkingSpace['location'],
+              parkingSpace['state']);
+        }).toList();
 
-      setState(() {
-        parkingSpaceLocations = locations;
-        filteredParkingSpaceLocations = locations;
-      });
-    } else {
-      throw Exception('Failed to load data');
+        setState(() {
+          parkingSpaceLocations = parkingSpaces;
+          filteredParkingSpaceLocations = parkingSpaces;
+        });
+      } else {
+        throw Exception('Failed to load data');
+      }
+    } catch (e) {
+      print('Error al cargar datos: $e');
     }
   }
 
   Future<void> getCurrentLocation() async {
-  try {
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
 
-    setState(() {
-      currentLocation = position;
-    });
-  } catch (e) {
-    print(e);
+      setState(() {
+        currentLocation = position;
+      });
+    } catch (e) {
+      print('Error al obtener la ubicación actual: $e');
+    }
   }
-}
 
-
-  void _showMarkerInfo(BuildContext context, LatLng location) {
-    final selectedParkingSpace = parkingSpaceLocations.firstWhere(
-      (LatLng parkingSpace) =>
-          parkingSpace.latitude == location.latitude &&
-          parkingSpace.longitude == location.longitude,
-    );
-
+  void _showMarkerInfo(BuildContext context, ParkingSpace parkingSpace) {
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -76,15 +99,51 @@ class _MapScreenState extends State<MapScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Parking Space Information',
+                'Información de los lugares de Parking',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8.0),
-              
-             
-              Text('Longitude: ${selectedParkingSpace.longitude}'),
-              Text('Latitude: ${selectedParkingSpace.latitude}'),
-              // Add more information as needed
+              Text('Nombre: ${parkingSpace.name}'),
+              Text('Descripcion: ${parkingSpace.description}'),
+              Text('Dirección: ${parkingSpace.coordinates}'),
+              RichText(
+                text: TextSpan(
+                  style: DefaultTextStyle.of(context).style,
+                  children: <TextSpan>[
+                    TextSpan(text: 'Estado: '),
+                    TextSpan(
+                      text: parkingSpace.state ? "Disponible" : "NO Disponible",
+                      style: TextStyle(
+                        color: parkingSpace.state ? Colors.green : Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Spacer(), // Esto permite que el botón esté al final del espacio disponible
+              Center(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    primary: Colors.blue,
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 50,
+                        vertical: 20), // Ajusta el padding según prefieras
+                    textStyle: TextStyle(
+                        fontSize:
+                            20), // Ajusta el tamaño del texto si es necesario
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ReservarScreen(id: parkingSpace.id),
+                      ),
+                    );
+                  },
+                  child: Text('Reservar'),
+                ),
+              )
             ],
           ),
         );
@@ -94,10 +153,26 @@ class _MapScreenState extends State<MapScreen> {
 
   void filterParkingSpaces(String query) {
     setState(() {
-      filteredParkingSpaceLocations = parkingSpaceLocations
-          .where((location) =>
-              location.toString().toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      // Removemos espacios en blanco al principio y al final de la consulta
+      String trimmedQuery = query.trim().toLowerCase();
+      List<String> queryWords = trimmedQuery.split(' ');
+
+      filteredParkingSpaceLocations =
+          parkingSpaceLocations.where((parkingSpace) {
+        String lowerCaseName = parkingSpace.name.toLowerCase();
+
+        // Verifica que todas las palabras de la consulta estén presentes en el nombre del estacionamiento
+        bool matchesName =
+            queryWords.every((word) => lowerCaseName.contains(word));
+
+        bool matchesLocation = parkingSpace.location
+            .toString()
+            .toLowerCase()
+            .contains(trimmedQuery);
+
+        // Devuelve true si el nombre o la ubicación coinciden con la consulta
+        return matchesName || matchesLocation;
+      }).toList();
     });
   }
 
@@ -122,31 +197,35 @@ class _MapScreenState extends State<MapScreen> {
           child: FlutterMap(
             options: MapOptions(
               center: currentLocation != null
-                  ? LatLng(currentLocation!.latitude, currentLocation!.longitude)
-                  : LatLng(-36.714658, -73.114729), // Default center coordinates
+                  ? LatLng(
+                      currentLocation!.latitude, currentLocation!.longitude)
+                  : LatLng(-36.714658,
+                      -73.114729), // Coordenadas de centro por defecto
               zoom: 15.0,
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate:
+                    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                 subdomains: ['a', 'b', 'c'],
               ),
               MarkerLayer(
                 markers: filteredParkingSpaceLocations
-                    .map<Marker>((LatLng location) => Marker(
-                          point: location,
+                    .map<Marker>((parkingSpace) => Marker(
+                          point: parkingSpace.location,
                           width: 80,
                           height: 80,
                           builder: (context) => GestureDetector(
                             onTap: () {
                               setState(() {
-                                selectedMarkerLocation = location;
+                                selectedMarkerLocation = parkingSpace.location;
                               });
-                              _showMarkerInfo(context, location);
+                              _showMarkerInfo(context, parkingSpace);
                             },
                             child: Icon(
-                              Icons.directions_car ,
-                              color: selectedMarkerLocation == location
+                              Icons.directions_car,
+                              color: selectedMarkerLocation ==
+                                      parkingSpace.location
                                   ? Colors.red
                                   : Colors.blue,
                               size: 48.0,

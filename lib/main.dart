@@ -3,18 +3,19 @@ import 'package:provider/provider.dart'; // Import the provider package
 import 'login.dart';
 import 'registro.dart';
 import 'package:provider/provider.dart';
-import 'dark_mode_manager.dart'; 
+import 'dark_mode_manager.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
   //debugPaintSizeEnabled = false;
   runApp(
     ChangeNotifierProvider(
-      create: (context) => DarkModeManager(), // Provide an instance of DarkModeManager
+      create: (context) =>
+          DarkModeManager(), // Provide an instance of DarkModeManager
       child: MyApp(),
     ),
   );
 }
-
 
 class MyApp extends StatelessWidget {
   @override
@@ -26,10 +27,18 @@ class MyApp extends StatelessWidget {
         primaryColor: Colors.blue, // Your primary color
         // Add other light theme properties here
       ),
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: [
+        const Locale('es', ''), // Español
+        // puedes añadir más idiomas si lo deseas
+      ],
     );
   }
 }
-
 
 class BienvenidaScreen extends StatelessWidget {
   @override

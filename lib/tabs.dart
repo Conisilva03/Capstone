@@ -117,7 +117,7 @@ Widget buildDrawer(BuildContext context) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ReservasScreen(),
+                builder: (context) => MapsScreen(),
               ),
             );
           },

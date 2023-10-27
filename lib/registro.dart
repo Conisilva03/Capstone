@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert'; // Import for JSON encoding
+import 'package:crypto/crypto.dart'; // Import for MD5 hashing
 
 class RegistroScreen extends StatefulWidget {
   @override
@@ -8,11 +9,20 @@ class RegistroScreen extends StatefulWidget {
 }
 
 class _RegistroScreenState extends State<RegistroScreen> {
-  final TextEditingController nombreController = TextEditingController();
+  final TextEditingController nombreApellidoController =
+      TextEditingController();
+  final TextEditingController usuarioController = TextEditingController();
   final TextEditingController correoController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
 
   bool aceptaTerminos = false;
+
+  // Función para cifrar la contraseña usando MD5
+  String _hashPassword(String password) {
+    return md5.convert(utf8.encode(password)).toString();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,9 +40,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
               height: 100,
               width: 100,
             ),
-
             SizedBox(height: 20),
-
             Text(
               'Registrarse',
               style: TextStyle(
@@ -40,18 +48,21 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   fontWeight: FontWeight.bold,
                   color: Colors.lightBlue),
             ),
-
             SizedBox(height: 20),
-
             TextFormField(
-              controller: nombreController,
-              decoration: InputDecoration(labelText: 'Nombre'),
+              controller: nombreApellidoController,
+              decoration: InputDecoration(labelText: 'Nombre y Apellido'),
+            ),
+            TextFormField(
+              controller: usuarioController,
+              decoration: InputDecoration(labelText: 'Nombre de Usuario'),
             ),
             TextFormField(
               controller: correoController,
               decoration: InputDecoration(labelText: 'Correo Electrónico'),
             ),
             _buildPasswordTextField(
+              controller: passwordController,
               labelText: 'Contraseña',
               obscureText: _obscurePassword,
               onPressedIcon: () {
@@ -60,9 +71,18 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 });
               },
             ),
-
+            SizedBox(height: 10),
+            _buildPasswordTextField(
+              controller: confirmPasswordController,
+              labelText: 'Confirmar Contraseña',
+              obscureText: _obscurePassword,
+              onPressedIcon: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
+              },
+            ),
             SizedBox(height: 20),
-
             Row(
               children: [
                 Checkbox(
@@ -76,45 +96,59 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 Text('Acepto los términos y condiciones'),
               ],
             ),
-
             SizedBox(height: 20),
-
             ElevatedButton(
               onPressed: () async {
-                if (aceptaTerminos) {
-                  final nombre = nombreController.text;
-                  final correo = correoController.text;
-                  final password = passwordController.text;
+                if (passwordController.text != confirmPasswordController.text) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Las contraseñas no coinciden.'),
+                    ),
+                  );
+                  return;
+                }
 
-                  // Create a JSON body with the specified fields
+                if (aceptaTerminos) {
+                  final nombreApellido = nombreApellidoController.text;
+                  final usuario = usuarioController.text;
+                  final correo = correoController.text;
+                  final passwordHashed = (passwordController.text);
+
                   final Map<String, String> requestBody = {
-                    'username': nombre,
+                    'full_name': nombreApellido,
+                    'username': usuario,
                     'email': correo,
-                    'hashed_password': password,
+                    'hashed_password': passwordHashed,
                   };
 
-                  // Make a POST request to register the user
                   final response = await http.post(
-                    Uri.parse('http://0.0.0.0:8000/users/'), // Use the correct endpoint
+                    Uri.parse('https://api2.parkingtalcahuano.cl/users/'),
                     headers: <String, String>{
-                      'Content-Type': 'application/json', // Use JSON content type
+                      'Content-Type': 'application/json',
                     },
-                    body: jsonEncode(requestBody), // Encode the JSON body
+                    body: jsonEncode(requestBody),
                   );
 
                   if (response.statusCode == 200) {
-                    // Registration successful
-                    Navigator.pop(context); // Navigate back to login screen
+                    Navigator.pop(context);
                   } else {
-                    // Registration failed
+                    String errorMsg = 'Registro fallido. Inténtalo de nuevo.';
+                    var responseData;
+                    try {
+                      responseData = jsonDecode(response.body);
+                      if (responseData.containsKey('error')) {
+                        errorMsg = responseData['error'];
+                      }
+                    } catch (e) {
+                      // handle parsing error
+                    }
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Registration failed. Please try again.'),
+                        content: Text(errorMsg),
                       ),
                     );
                   }
                 } else {
-                  // Show an error message if terms are not accepted
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
@@ -129,16 +163,14 @@ class _RegistroScreenState extends State<RegistroScreen> {
               ),
               child: Text('Registrarse'),
             ),
-
             SizedBox(height: 20),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text('¿Ya tienes cuenta?'),
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context); // Navigate back to login screen
+                    Navigator.pop(context);
                   },
                   child: Text('Ingresar'),
                 ),
@@ -153,12 +185,13 @@ class _RegistroScreenState extends State<RegistroScreen> {
   bool _obscurePassword = true;
 
   Widget _buildPasswordTextField({
+    required TextEditingController controller,
     required String labelText,
     required bool obscureText,
     required VoidCallback onPressedIcon,
   }) {
     return TextFormField(
-      controller: passwordController,
+      controller: controller,
       obscureText: obscureText,
       decoration: InputDecoration(
         labelText: labelText,
