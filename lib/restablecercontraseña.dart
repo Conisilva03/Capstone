@@ -5,7 +5,7 @@ class RestablecerContrasenaScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Restablecer Contraseña'),
+        title: Text('Restablecer contraseña'),
         backgroundColor: Colors.blue,
       ),
       body: Padding(
@@ -14,7 +14,7 @@ class RestablecerContrasenaScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Restablecer Contraseña',
+              'Restablecer contraseña',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -28,13 +28,13 @@ class RestablecerContrasenaScreen extends StatelessWidget {
             SizedBox(height: 20),
             TextFormField(
               decoration: InputDecoration(
-                labelText: 'Nueva Contraseña',
+                labelText: 'Nueva contraseña',
               ),
             ),
             SizedBox(height: 20),
             TextFormField(
               decoration: InputDecoration(
-                labelText: 'Confirmar Contraseña',
+                labelText: 'Confirmar contraseña',
               ),
             ),
             SizedBox(height: 20),
@@ -47,7 +47,7 @@ class RestablecerContrasenaScreen extends StatelessWidget {
                 primary: Colors.blue,
                 onPrimary: Colors.white,
               ),
-              child: Text('Restablecer Contraseña'),
+              child: Text('Restablecer contraseña'),
             ),
           ],
         ),

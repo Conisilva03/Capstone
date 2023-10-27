@@ -15,7 +15,7 @@ class InicioScreen extends StatelessWidget {
         final theme = darkModeManager.darkModeEnabled ? darkTheme : lightTheme;
 
         return Theme(
-          data: theme, // Apply the theme to this screen
+          data: theme, 
           child: Scaffold(
             appBar: AppBar(
               title: Text('Bienvenido a la App de Estacionamiento'),
@@ -30,7 +30,7 @@ class InicioScreen extends StatelessWidget {
                       height: 50,
                     ),
                     Image.asset(
-                      'logo.png', // Replace with the actual path to your image in assets
+                      'logo.png', 
                       height: 200,
                       width: 200,
                     ),

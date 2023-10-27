@@ -5,7 +5,7 @@ class OlvidoContrasenaScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Olvido de Contraseña'),
+        title: Text('Olvido de contraseña'),
         backgroundColor: Colors.blue,
       ),
       body: Padding(
@@ -28,7 +28,7 @@ class OlvidoContrasenaScreen extends StatelessWidget {
             SizedBox(height: 20),
             TextFormField(
               decoration: InputDecoration(
-                labelText: 'Correo Electrónico',
+                labelText: 'Correo electrónico',
               ),
             ),
             SizedBox(height: 20),
@@ -40,8 +40,11 @@ class OlvidoContrasenaScreen extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 primary: Colors.blue,
                 onPrimary: Colors.white,
+                padding: EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 12), // Tamaño reducido
+                textStyle: TextStyle(fontSize: 16), // Tamaño de texto reducido
               ),
-              child: Text('Enviar Correo de Restablecimiento'),
+              child: Text('Enviar correo'),
             ),
           ],
         ),
