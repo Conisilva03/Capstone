@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'olvidocontrasena.dart';
 import 'registro.dart';
+import 'dart:convert';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -43,6 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Guarda el token en las preferencias compartidas
         await guardarTokenDeAutenticacion(token);
+        fetchDataAndStoreId(email);
 
         Navigator.push(
           context,
@@ -86,6 +88,26 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         },
       );
+    }
+  }
+
+  Future<void> fetchDataAndStoreId(String username) async {
+    try {
+      final response = await http.get(Uri.parse(
+          'https://api2.parkingtalcahuano.cl/users/by-username/$username'));
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        final id = jsonData['id'] as int;
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('user_id', id);
+      } else {
+        throw Exception('Failed to load user');
+      }
+    } catch (e) {
+      print('Error al cargar datos: $e');
+      throw e;
     }
   }
 

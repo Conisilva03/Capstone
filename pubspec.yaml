@@ -46,7 +46,10 @@ dependencies:
   shared_preferences: ^2.0.6
   flutter_datetime_picker: ^1.5.1
   crypto: ^3.0.1
-  
+  jaguar_jwt: ^3.0.0
+  jose: ^0.3.4
+  jwt_decoder: ^2.0.1
+  url_launcher: ^6.0.12
   
   
 

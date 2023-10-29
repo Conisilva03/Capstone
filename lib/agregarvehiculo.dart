@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'tabs.dart';
 import 'package:provider/provider.dart';
 import 'dark_mode_manager.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'listarvehiculos.dart';
 
 class AgregarVehiculosScreen extends StatefulWidget {
   @override
@@ -15,17 +19,73 @@ class _AgregarVehiculosScreenState extends State<AgregarVehiculosScreen> {
   TextEditingController _anioController = TextEditingController();
   TextEditingController _placaController = TextEditingController();
 
+  Future<int?> fetchUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('user_id');
+  }
+
+  bool validarPatente(String patente) {
+    return patente.length == 6;
+  }
+
+  Future<void> agregarVehiculo() async {
+    final apiUrl = Uri.parse('https://api2.parkingtalcahuano.cl/cars/');
+    int? userId = await fetchUserId();
+
+    if (userId == null) {
+      print("Error: No se pudo obtener el ID del usuario.");
+      return;
+    }
+
+    if (!validarPatente(_placaController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("La patente ingresada no es válida")),
+      );
+      return;
+    }
+
+    final body = {
+      "user_id": userId,
+      "license_plate": _placaController.text,
+      "year": int.tryParse(_anioController.text) ??
+          0, // Convierte la cadena a int, usa 0 si no es válido
+      "brand": _marcaController.text,
+      "model": _modeloController.text,
+    };
+
+    final response = await http.post(
+      apiUrl,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Vehículo agregado exitosamente")),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => ListarVehiculosScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error al agregar vehículo: ${response.body}")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<DarkModeManager>(
       builder: (context, darkModeManager, child) {
-        final lightTheme = ThemeData.light();
-        final darkTheme = ThemeData.dark();
-
-        final theme = darkModeManager.darkModeEnabled ? darkTheme : lightTheme;
+        final theme = darkModeManager.darkModeEnabled
+            ? ThemeData.dark()
+            : ThemeData.light();
 
         return Theme(
-          data: theme, // Apply the theme to this screen
+          data: theme,
           child: Scaffold(
             appBar: AppBar(
               title: Text('Agregar Vehículo'),
@@ -35,61 +95,40 @@ class _AgregarVehiculosScreenState extends State<AgregarVehiculosScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Marca field
                   TextFormField(
                     controller: _marcaController,
                     decoration: InputDecoration(labelText: 'Marca'),
                   ),
-
                   SizedBox(height: 20),
-
-                  // Modelo field
                   TextFormField(
                     controller: _modeloController,
                     decoration: InputDecoration(labelText: 'Modelo'),
                   ),
-
                   SizedBox(height: 20),
-
-                  // Año field
                   TextFormField(
                     controller: _anioController,
                     decoration: InputDecoration(labelText: 'Año'),
+                    keyboardType: TextInputType.number, // Solo números
                   ),
-
                   SizedBox(height: 20),
-
-                  // Placa field
                   TextFormField(
                     controller: _placaController,
                     decoration: InputDecoration(labelText: 'Patente'),
                   ),
-
                   SizedBox(height: 20),
-
-                  // Button to add vehicle
                   ElevatedButton(
-                    onPressed: () {
-                      // Your logic to add the vehicle here
-                      String marca = _marcaController.text;
-                      String modelo = _modeloController.text;
-                      String anio = _anioController.text;
-                      String placa = _placaController.text;
-
-                      // Perform the logic to add the vehicle, such as sending the data to a database.
-
-                      // After adding the vehicle, you can perform additional actions, such as navigating to the home screen or displaying a success message.
-                    },
+                    onPressed: agregarVehiculo,
                     style: ElevatedButton.styleFrom(
-                      primary: Colors.blue, // Blue color
-                      onPrimary: Colors.white, // White text
+                      primary: Colors.blue,
+                      onPrimary: Colors.white,
                     ),
                     child: Text('Agregar Vehículo'),
                   ),
                 ],
               ),
             ),
-            drawer: buildDrawer(context),
+            drawer: buildDrawer(
+                context), // Asegúrate de tener esta función definida
           ),
         );
       },
@@ -98,7 +137,6 @@ class _AgregarVehiculosScreenState extends State<AgregarVehiculosScreen> {
 
   @override
   void dispose() {
-    // Dispose of controllers to prevent memory leaks.
     _marcaController.dispose();
     _modeloController.dispose();
     _anioController.dispose();

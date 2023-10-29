@@ -3,7 +3,6 @@ import 'tabs.dart';
 import 'package:provider/provider.dart';
 import 'dark_mode_manager.dart';
 
-
 class RecargarDineroScreen extends StatefulWidget {
   @override
   _RecargarDineroScreenState createState() => _RecargarDineroScreenState();
@@ -12,6 +11,7 @@ class RecargarDineroScreen extends StatefulWidget {
 class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
   TextEditingController _montoController = TextEditingController();
   double saldo = 0.0;
+  String? metodoDePagoSeleccionado;
 
   @override
   Widget build(BuildContext context) {
@@ -30,20 +30,6 @@ class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                // Lógica para recargar dinero
-                // Puedes abrir un diálogo de confirmación antes de realizar la recarga.
-              },
-              style: ElevatedButton.styleFrom(
-                primary: Colors.lightBlue,
-                onPrimary: Colors.white,
-                padding: EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 10), // Ajusta el tamaño del botón
-              ),
-              child: Text('RECARGAR', style: TextStyle(fontSize: 16)),
             ),
             SizedBox(height: 20),
             Text(
@@ -69,10 +55,38 @@ class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
               ),
             ),
             SizedBox(height: 20),
+            Text(
+              'Métodos de Pago:',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            RadioListTile<String>(
+              title: Text('Tarjeta de Crédito'),
+              value: 'tarjeta_credito',
+              groupValue: metodoDePagoSeleccionado,
+              onChanged: (String? value) {
+                setState(() {
+                  metodoDePagoSeleccionado = value;
+                });
+              },
+            ),
+            RadioListTile<String>(
+              title: Text('Transferencia Bancaria'),
+              value: 'transferencia',
+              groupValue: metodoDePagoSeleccionado,
+              onChanged: (String? value) {
+                setState(() {
+                  metodoDePagoSeleccionado = value;
+                });
+              },
+            ),
+            SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Lógica para seleccionar el método de pago
-                // Puedes abrir una pantalla para seleccionar el método de pago aquí.
+                // Lógica para recargar
+                // Aquí puedes verificar el método de pago seleccionado y realizar la recarga correspondiente.
               },
               style: ElevatedButton.styleFrom(
                 primary: Colors.lightBlue,
@@ -80,8 +94,7 @@ class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
                 padding: EdgeInsets.symmetric(
                     horizontal: 20, vertical: 10), // Ajusta el tamaño del botón
               ),
-              child: Text('Seleccionar Método de Pago',
-                  style: TextStyle(fontSize: 14)),
+              child: Text('Recargar', style: TextStyle(fontSize: 14)),
             ),
           ],
         ),

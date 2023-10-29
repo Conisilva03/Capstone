@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'tabs.dart';
-import 'package:provider/provider.dart';
-import 'dark_mode_manager.dart';
+import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:http/http.dart' as http; // Add this import
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ListarVehiculosScreen extends StatefulWidget {
   @override
@@ -11,33 +9,39 @@ class ListarVehiculosScreen extends StatefulWidget {
 }
 
 class _ListarVehiculosScreenState extends State<ListarVehiculosScreen> {
-  // List of vehicles
-  List<Vehiculo> vehiculos = []; // Initialize an empty list
+  List<Vehiculo> vehiculos = [];
+
+  Future<int?> fetchUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('user_id');
+  }
 
   @override
   void initState() {
     super.initState();
-    // Fetch vehicle data when the widget is initialized
-    fetchVehicleData();
+    _loadVehicles(); // Moved the logic to a separate method
   }
 
-  Future<void> fetchVehicleData() async {
-    // Replace with your API URL
-    final apiUrl = Uri.parse('http://localhost:8000/cars/1');
+  Future<void> _loadVehicles() async {
+    int? userId = await fetchUserId();
+    if (userId != null) {
+      fetchVehicleData(userId);
+    }
+  }
 
+  Future<void> fetchVehicleData(user_id) async {
+    final apiUrl = Uri.parse('https://api2.parkingtalcahuano.cl/cars/$user_id');
     try {
       final response = await http.get(apiUrl);
-
       if (response.statusCode == 200) {
-        // If the server returns a 200 OK response, parse the JSON
         final List<dynamic> data = json.decode(response.body);
         setState(() {
-          // Convert JSON data into a list of Vehiculo objects
-          vehiculos = data.map((item) => Vehiculo.fromJson(item)).toList();
+          vehiculos = data
+              .map((item) => Vehiculo.fromJson(item))
+              .where((vehiculo) => vehiculo.is_active)
+              .toList();
         });
       } else {
-        // If the server did not return a 200 OK response,
-        // throw an exception or handle the error as needed.
         print('Failed to load vehicle data');
       }
     } catch (exception) {
@@ -47,64 +51,37 @@ class _ListarVehiculosScreenState extends State<ListarVehiculosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<DarkModeManager>(
-      builder: (context, darkModeManager, child) {
-        final lightTheme = ThemeData.light();
-        final darkTheme = ThemeData.dark();
-
-        final theme = darkModeManager.darkModeEnabled ? darkTheme : lightTheme;
-
-        return Theme(
-          data: theme, // Apply the theme to this screen
-          child: Scaffold(
-            appBar: AppBar(
-              title: Text('Listar Vehículos'),
-            ),
-            body: ListView.builder(
-              itemCount: vehiculos.length,
-              itemBuilder: (context, index) {
-                final vehiculo = vehiculos[index];
-                return ListTile(
-                  title: Text('${vehiculo.marca} ${vehiculo.modelo}'),
-                  subtitle: Text('Año: ${vehiculo.anio} - Placa: ${vehiculo.placa}'),
-                  trailing: PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert, color: Colors.grey),
-                    itemBuilder: (context) => <PopupMenuEntry<String>>[
-                      PopupMenuItem<String>(
-                        value: 'seleccionar',
-                        child: Text('Seleccionar'),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'editar',
-                        child: Text('Editar'),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'eliminar',
-                        child: Text('Desactivar'),
-                      ),
-                    ],
-                    onSelected: (String choice) {
-                      // Handle user selection here
-                      switch (choice) {
-                        case 'seleccionar':
-                          // Logic for selecting the vehicle
-                          break;
-                        case 'editar':
-                          // Logic for editing the vehicle
-                          break;
-                        case 'eliminar':
-                          // Logic for deleting the vehicle
-                          break;
-                      }
-                    },
-                  ),
-                );
-              },
-            ),
-            drawer: buildDrawer(context),
-          ),
-        );
-      },
+    return Scaffold(
+      appBar: AppBar(title: Text('Listar Vehículos')),
+      body: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          columns: [
+            DataColumn(label: Text('Marca')),
+            DataColumn(label: Text('Modelo')),
+            DataColumn(label: Text('Año')),
+            DataColumn(label: Text('Placa')),
+            DataColumn(label: Text('Acción')),
+          ],
+          rows: vehiculos.map((vehiculo) {
+            return DataRow(cells: [
+              DataCell(Text(vehiculo.marca)),
+              DataCell(Text(vehiculo.modelo)),
+              DataCell(Text('${vehiculo.anio}')),
+              DataCell(Text(vehiculo.placa)),
+              DataCell(ElevatedButton(
+                child: Text('Deshabilitar'),
+                onPressed: () {
+                  // Lógica para deshabilitar el vehículo. Podrías usar un API call.
+                  setState(() {
+                    vehiculos.remove(vehiculo);
+                  });
+                },
+              )),
+            ]);
+          }).toList(),
+        ),
+      ),
     );
   }
 }
@@ -114,21 +91,23 @@ class Vehiculo {
   final String modelo;
   final int anio;
   final String placa;
+  final bool is_active;
 
   Vehiculo({
     required this.marca,
     required this.modelo,
     required this.anio,
     required this.placa,
+    required this.is_active,
   });
 
-  // Factory constructor to create Vehiculo objects from JSON
   factory Vehiculo.fromJson(Map<String, dynamic> json) {
     return Vehiculo(
       marca: json['brand'],
       modelo: json['model'],
       anio: json['year'],
       placa: json['license_plate'],
+      is_active: json['is_active'],
     );
   }
 }

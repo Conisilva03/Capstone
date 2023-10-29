@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'login.dart';
 
 class CerrarSesionScreen extends StatelessWidget {
   @override
@@ -30,11 +31,14 @@ class CerrarSesionScreen extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 // Elimina el token de autenticación antes de cerrar la sesión.
-                await eliminarTokenDeAutenticacion();
+                await eliminarTokenDeAutenticacion(context);
 
                 // Cierra la sesión y vuelve a la pantalla de inicio de sesión o a donde sea necesario.
                 Navigator.of(context).pop(); // Cierra el diálogo
-                Navigator.of(context).pop(); // Cierra la pantalla actual
+                // En lugar de Navigator.of(context).pop(); usa el método pushAndRemoveUntil para asegurarte de que se redirige a Login
+                Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                    (Route<dynamic> route) => false);
               },
               child: Text('Sí'),
             ),
@@ -50,10 +54,11 @@ class CerrarSesionScreen extends StatelessWidget {
     );
   }
 
-  Future<void> eliminarTokenDeAutenticacion() async {
+  Future<void> eliminarTokenDeAutenticacion(BuildContext context) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       prefs.remove('auth_token');
+      prefs.remove('user_id');
     } catch (e) {
       print('Error al eliminar el token de autenticación: $e');
       // Maneja cualquier error que pueda ocurrir al eliminar el token de autenticación.

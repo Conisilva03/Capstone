@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // Import the provider package
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dark_mode_manager.dart';
 import 'login.dart';
 import 'registro.dart';
-import 'package:provider/provider.dart';
-import 'dark_mode_manager.dart';
+import 'inicio.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
-  //debugPaintSizeEnabled = false;
   runApp(
     ChangeNotifierProvider(
-      create: (context) =>
-          DarkModeManager(), // Provide an instance of DarkModeManager
+      create: (context) => DarkModeManager(),
       child: MyApp(),
     ),
   );
@@ -24,8 +23,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: BienvenidaScreen(),
       theme: ThemeData(
-        primaryColor: Colors.blue, // Your primary color
-        // Add other light theme properties here
+        primaryColor: Colors.blue,
       ),
       localizationsDelegates: [
         GlobalMaterialLocalizations.delegate,
@@ -34,7 +32,7 @@ class MyApp extends StatelessWidget {
       ],
       supportedLocales: [
         const Locale('es', ''), // Español
-        // puedes añadir más idiomas si lo deseas
+        // Añade más idiomas si lo deseas
       ],
     );
   }
@@ -43,6 +41,7 @@ class MyApp extends StatelessWidget {
 class BienvenidaScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    _checkIfLoggedIn(context);
     final darkModeManager = context.watch<DarkModeManager>();
 
     return Scaffold(
@@ -125,5 +124,18 @@ class BienvenidaScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _checkIfLoggedIn(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+
+    if (token != null) {
+      // Si el token existe, navega directamente a InicioScreen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => InicioScreen()),
+      );
+    }
   }
 }
