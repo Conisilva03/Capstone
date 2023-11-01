@@ -51,6 +51,8 @@ class _AgregarVehiculosScreenState extends State<AgregarVehiculosScreen> {
           0, // Convierte la cadena a int, usa 0 si no es válido
       "brand": _marcaController.text,
       "model": _modeloController.text,
+      "is_active": true,
+    
     };
 
     final response = await http.post(
@@ -60,6 +62,7 @@ class _AgregarVehiculosScreenState extends State<AgregarVehiculosScreen> {
       },
       body: jsonEncode(body),
     );
+
 
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(

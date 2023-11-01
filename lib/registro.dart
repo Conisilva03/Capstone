@@ -65,6 +65,8 @@ class _RegistroScreenState extends State<RegistroScreen> {
     required String username,
     required String email,
     required String password,
+    required String role,
+    required bool is_active,
   }) async {
     final response = await http.post(
       Uri.parse('https://api2.parkingtalcahuano.cl/users/'),
@@ -75,7 +77,8 @@ class _RegistroScreenState extends State<RegistroScreen> {
         "username": username,
         "email": email,
         "hashed_password": (password), // Utilizando tu función de hash.
-        // Agrega aquí cualquier otro campo necesario.
+        "role": role,
+        "is_active": is_active,
       }),
     );
 
@@ -244,7 +247,10 @@ class _RegistroScreenState extends State<RegistroScreen> {
       username: usuarioController.text,
       email: correoController.text,
       password: (passwordController.text),
+      role:'user',
+      is_active: true,
     );
+    print(registered);
 
     if (registered) {
       ScaffoldMessenger.of(context).showSnackBar(
