@@ -48,7 +48,7 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> fetchData() async {
     try {
       final response = await http.get(Uri.parse(
-          'https://api1.marweg.cl/parking_spaces')); // Asegúrate de tener la URL correcta aquí
+          'https://api1.marweg.cl/parking_spaces')); 
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -89,48 +89,53 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  void _showMarkerInfo(BuildContext context, ParkingSpace parkingSpace) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Container(
-          padding: EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Información de los lugares de Parking',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8.0),
-              Text('Nombre: ${parkingSpace.name}'),
-              Text('Descripcion: ${parkingSpace.description}'),
-              Text('Dirección: ${parkingSpace.coordinates}'),
-              RichText(
-                text: TextSpan(
-                  style: DefaultTextStyle.of(context).style,
-                  children: <TextSpan>[
-                    TextSpan(text: 'Estado: '),
-                    TextSpan(
-                      text: parkingSpace.state ? "Disponible" : "NO Disponible",
-                      style: TextStyle(
-                        color: parkingSpace.state ? Colors.green : Colors.red,
-                      ),
+void _showMarkerInfo(BuildContext context, ParkingSpace parkingSpace) {
+  showModalBottomSheet(
+    context: context,
+    builder: (context) {
+      final isParkingSpaceAvailable = parkingSpace.state;
+
+      return Container(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Información de los lugares de Parking',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8.0),
+            Text('Nombre: ${parkingSpace.name}'),
+            Text('Descripcion: ${parkingSpace.description}'),
+            Text('Dirección: ${parkingSpace.coordinates}'),
+            RichText(
+              text: TextSpan(
+                style: DefaultTextStyle.of(context).style,
+                children: <TextSpan>[
+                  TextSpan(text: 'Estado: '),
+                  TextSpan(
+                    text: isParkingSpaceAvailable ? "Disponible" : "NO Disponible",
+                    style: TextStyle(
+                      color: isParkingSpaceAvailable ? Colors.green : Colors.red,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              Spacer(), // Esto permite que el botón esté al final del espacio disponible
+            ),
+            Spacer(),
+            Divider(),
+            if (isParkingSpaceAvailable) // Mostrar botón solo si el estacionamiento está disponible
               Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     primary: Colors.blue,
                     padding: EdgeInsets.symmetric(
-                        horizontal: 50,
-                        vertical: 20), // Ajusta el padding según prefieras
+                      horizontal: 50,
+                      vertical: 20,
+                    ),
                     textStyle: TextStyle(
-                        fontSize:
-                            20), // Ajusta el tamaño del texto si es necesario
+                      fontSize: 20,
+                    ),
                   ),
                   onPressed: () {
                     Navigator.push(
@@ -141,15 +146,42 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     );
                   },
-                  child: Text('Reservar'),
+                  child: Text('Ocupar Ahora'),
                 ),
-              )
-            ],
-          ),
-        );
-      },
-    );
-  }
+              ),
+            Spacer(),
+            Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.blue[900],
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 50,
+                    vertical: 20,
+                  ),
+                  textStyle: TextStyle(
+                    fontSize: 20,
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ReservarScreen(id: parkingSpace.id),
+                    ),
+                  );
+                },
+                child: Text('Reservar'),
+              ),
+            ),
+            Spacer(),
+          ],
+        ),
+      );
+    },
+  );
+}
+
 
   void filterParkingSpaces(String query) {
     setState(() {
