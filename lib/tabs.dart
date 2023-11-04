@@ -182,7 +182,7 @@ Widget buildDrawer(BuildContext context) {
         ),
         ListTile(
           leading: Icon(Icons.calendar_today),
-          title: Text('Reservas'),
+          title: Text('Mis Reservas'),
           onTap: () {
             Navigator.push(
               context,
@@ -192,6 +192,20 @@ Widget buildDrawer(BuildContext context) {
             );
           },
         ),
+        Divider(),
+        ListTile(
+          leading: Icon(Icons.live_help),
+          title: Text('Soporte'),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SoporteScreen(),
+              ),
+            );
+          },
+        ),
+        
         Divider(),
         ListTile(
           leading: Icon(Icons.build),
