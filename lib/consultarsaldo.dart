@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-
+import 'recargar.dart';
 import 'dark_mode_manager.dart';
 import 'tabs.dart'; // Assuming 'tabs.dart' defines the 'buildDrawer' method
 
@@ -124,9 +124,12 @@ class ConsultarSaldoScreen extends StatelessWidget {
         const SizedBox(height: 20),
         ElevatedButton(
           onPressed: () {
-            // Here you would usually call setState() to refresh the screen with the updated balance
-            // However, since we are in a StatelessWidget, you might consider using a callback or
-            // moving this logic to a StatefulWidget
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => RecargarDineroScreen(),
+              ),
+            );
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blue,

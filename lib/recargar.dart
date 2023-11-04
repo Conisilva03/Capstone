@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'consultarsaldo.dart';
 
 class RecargarDineroScreen extends StatefulWidget {
   @override
@@ -18,37 +19,37 @@ class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
     return prefs.getInt('user_id');
   }
 
-  Future<void> recargarDinero(double amount) async {
-    int? userId = await fetchUserId();
-    if (userId != null) {
-      String apiUrl = 'https://api2.parkingtalcahuano.cl/wallet/charge/$userId';
+ Future<void> recargarDinero(int userId, double amount) async {
+  final String apiUrl = 'https://api2.parkingtalcahuano.cl/wallet/charge/$userId?amount=$amount';
 
-      Map<String, String> headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
+  
+  final Map<String, dynamic> data = {
+    'user_id': userId,
+    'amount': amount,
+  };
 
-      Map<String, dynamic> body = {
-        'user_id': userId,
-        'amount': amount,
-      };
+  final response = await http.post(
+    Uri.parse(apiUrl),
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: jsonEncode(data),
+  );
 
-      http.Response response = await http.post(
-        Uri.parse(apiUrl),
-        headers: headers,
-        body: json.encode(body),
-      );
-
-      if (response.statusCode == 200) {
-        print("Recarga exitosa");
-      } else {
-        print("Error al recargar: ${response.statusCode}");
-        print("Body: ${response.body}");
-      }
-    } else {
-      print("No se pudo obtener el ID del usuario");
-    }
+  if (response.statusCode == 200) {
+    print('Money charged successfully');
+    Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ConsultarSaldoScreen(),
+              ),
+            );
+  } else {
+    print('Error charging money: ${response.statusCode}');
+    print('Response content: ${response.body}');
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -98,8 +99,10 @@ class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
             ElevatedButton(
               onPressed: () async {
                 double? amount = double.tryParse(_montoController.text);
-                if (amount != null) {
-                  await recargarDinero(amount);
+                int? userId = await fetchUserId();
+
+                if (amount != null && userId != null) {
+                  await recargarDinero(userId,amount);
                 } else {
                   _showErrorDialog();
                 }

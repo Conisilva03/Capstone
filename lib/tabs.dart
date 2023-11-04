@@ -10,11 +10,30 @@ import 'configuracion.dart';
 import 'reservar.dart';
 import 'cerrarsesion.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:jaguar_jwt/jaguar_jwt.dart';
-import 'soporte.dart';
-import 'listadoreservas.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+
+Future<Map<String, dynamic>> fetchDataAndStoreData(int userId) async {
+  try {
+    final response = await http.get(Uri.parse(
+        'https://api2.parkingtalcahuano.cl/users/$userId')); // Include the actual user ID
+
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+
+      // You can also return the parsed JSON data
+      return jsonData;
+    } else {
+      throw Exception('Failed to load data');
+    }
+  } catch (e) {
+    print('Error al cargar datos: $e');
+    // Handle or rethrow the exception as needed
+    throw e;
+  }
+}
+
 
 Future<Map<String, dynamic>?> fetchData(int id) async {
   try {
@@ -48,6 +67,7 @@ Future<int?> fetchUserId() async {
   int? userId = prefs.getInt('user_id');
   return userId;
 }
+
 
 Widget buildDrawer(BuildContext context) {
   return Drawer(
@@ -167,19 +187,7 @@ Widget buildDrawer(BuildContext context) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ListarReservasScreen(),
-              ),
-            );
-          },
-        ),
-        ListTile(
-          leading: Icon(Icons.live_help),
-          title: Text('Soporte'),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => SoporteScreen(),
+                builder: (context) => MapsScreen(),
               ),
             );
           },
@@ -199,7 +207,7 @@ Widget buildDrawer(BuildContext context) {
         ),
         Divider(),
         ListTile(
-          leading: Icon(Icons.exit_to_app),
+          leading: Icon(Icons.exit_to_app), // Cambié el ícono a uno de salida
           title: Text('Cerrar Sesión'),
           onTap: () {
             Navigator.push(

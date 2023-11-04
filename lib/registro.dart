@@ -24,13 +24,11 @@ class RegistroScreen extends StatefulWidget {
 
 class _RegistroScreenState extends State<RegistroScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController nombreApellidoController =
-      TextEditingController();
+  final TextEditingController nombreApellidoController = TextEditingController();
   final TextEditingController usuarioController = TextEditingController();
   final TextEditingController correoController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
 
   bool aceptaTerminos = false;
   bool _obscurePassword = true;
@@ -53,14 +51,13 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
     if (response.statusCode == 200) {
       Map<String, dynamic> responseBody = json.decode(response.body);
-      return responseBody['exists'] ??
-          false; // Asumiendo que el campo se llama 'exists' y es booleano.
+      return responseBody['exists'] ?? false; // Assuming the field is called 'exists' and is boolean.
     } else {
       throw Exception('Error checking user existence');
     }
   }
 
-  Future<bool> registerUser({
+  Future<int> registerUser({
     required String name,
     required String username,
     required String email,
@@ -76,18 +73,28 @@ class _RegistroScreenState extends State<RegistroScreen> {
       body: json.encode({
         "username": username,
         "email": email,
-        "hashed_password": (password), // Utilizando tu función de hash.
+        "hashed_password": (password), // Using your hash function.
         "role": role,
         "is_active": is_active,
       }),
     );
 
     if (response.statusCode == 200) {
-      return true;
+      Map<String, dynamic> responseBody = json.decode(response.body);
+      return responseBody['id'];
     } else {
-      return false;
+      return 0;
     }
-    ;
+  }
+
+  Future<bool> createWallet({required int userId}) async {
+    final response = await http.post(
+      Uri.parse('https://api2.parkingtalcahuano.cl/wallets/'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({"user_id": userId, "balance": 0}),
+    );
+
+    return response.statusCode == 200;
   }
 
   @override
@@ -143,7 +150,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 controller: confirmPasswordController,
                 labelText: 'Confirmar Contraseña',
               ),
-              SizedBox(height: 20), // Agregamos espacio arriba de los términos
+              SizedBox(height: 20),
               Row(
                 children: [
                   Checkbox(
@@ -161,7 +168,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   ),
                 ],
               ),
-              SizedBox(height: 20), // Agregamos espacio debajo del botón
+              SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _submitForm,
                 child: Text('Registrarse'),
@@ -191,11 +198,10 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     "1. Luego de un registro exitoso, podrás acceder a la sección 'Comenzar' para estacionarte."),
                 SizedBox(height: 10),
                 Text(
-                    "2. Para una reserva exitosa, debes dirigirse a la sección de 'Buscar estacionamientos' y seleccionar el de tu preferencia y clickear 'Reservar', pudiendo terminar también tu reserva si te desocupas antes de lo presupuestado."),
+                    "2. Para una reserva exitosa, debes dirigirte a la sección de 'Buscar estacionamientos' y seleccionar el de tu preferencia y clickear 'Reservar', pudiendo terminar también tu reserva si te desocupas antes de lo presupuestado."),
                 SizedBox(height: 10),
                 Text(
                     "3. Puedes cancelar una reserva, siempre y cuando sea mínimo media hora antes de la hora de reserva."),
-                // ... Puedes agregar más instrucciones aquí...
               ],
             ),
           ),
@@ -228,7 +234,6 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     "2. No nos hacemos responsables de daños a vehículos ni sus pertenencias."),
                 SizedBox(height: 10),
                 Text("3. Aplicación solo para mayores de edad."),
-                // ... Puedes agregar más términos aquí...
               ],
             ),
           ),
@@ -282,7 +287,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
       return;
     }
 
-    bool registered = await registerUser(
+    int user_id = await registerUser(
       name: nombreApellidoController.text,
       username: usuarioController.text,
       email: correoController.text,
@@ -290,20 +295,21 @@ class _RegistroScreenState extends State<RegistroScreen> {
       role: 'user',
       is_active: true,
     );
-    print(registered);
 
-    if (registered) {
+    if (user_id != 0) {
+      final walletCreated = await createWallet(userId: user_id);
+      if (walletCreated) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Registro exitoso! Bienvenido!'),
           backgroundColor: Colors.green,
         ),
       );
+      };
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              LoginScreen(), // Asumiendo que tu pantalla de login se llama `LoginScreen`
+          builder: (context) => LoginScreen(),
         ),
       );
     } else {
