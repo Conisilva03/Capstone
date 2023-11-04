@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:jaguar_jwt/jaguar_jwt.dart';
 import 'soporte.dart';
+import 'listadoreservas.dart';
 
 Future<Map<String, dynamic>?> fetchData(int id) async {
   try {
@@ -166,7 +167,7 @@ Widget buildDrawer(BuildContext context) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => MapsScreen(),
+                builder: (context) => ListarReservasScreen(),
               ),
             );
           },

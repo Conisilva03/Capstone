@@ -1,5 +1,3 @@
-import 'dart:html';
-
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
@@ -246,7 +244,7 @@ class _ReservarScreenState extends State<ReservarScreen> {
                         );
 
                         // Espera 4 segundos antes de redireccionar
-                        Future.delayed(Duration(seconds: 4), () {
+                        Future.delayed(Duration(seconds: 3), () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(

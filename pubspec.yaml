@@ -50,6 +50,8 @@ dependencies:
   jose: ^0.3.4
   jwt_decoder: ^2.0.1
   url_launcher: ^6.0.12
+  mockito: ^5.4.2
+  flutter_local_notifications: ^9.0.0
   
   
 

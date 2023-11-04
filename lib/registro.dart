@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
-import 'package:app_parking/login.dart';
 
 void main() => runApp(MyApp());
 
@@ -42,25 +41,19 @@ class _RegistroScreenState extends State<RegistroScreen> {
   Future<bool> checkUserExistence(String username, String email) async {
     final response = await http.post(
       Uri.parse('https://api2.parkingtalcahuano.cl/users/check-existence'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({
-        "username": username,
-        "email": email,
-      }),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({"username": username, "email": email}),
     );
 
     if (response.statusCode == 200) {
       Map<String, dynamic> responseBody = json.decode(response.body);
-      return responseBody['exists'] ??
-          false; // Asumiendo que el campo se llama 'exists' y es booleano.
+      return responseBody['exists'] ?? false;
     } else {
       throw Exception('Error checking user existence');
     }
   }
 
-  Future<bool> registerUser({
+  Future<Map<String, dynamic>?> registerUser({
     required String name,
     required String username,
     required String email,
@@ -70,107 +63,94 @@ class _RegistroScreenState extends State<RegistroScreen> {
   }) async {
     final response = await http.post(
       Uri.parse('https://api2.parkingtalcahuano.cl/users/'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
       body: json.encode({
+        "name": name,
         "username": username,
         "email": email,
-        "hashed_password": (password), // Utilizando tu función de hash.
+        "hashed_password": _hashPassword(password),
         "role": role,
         "is_active": is_active,
       }),
     );
 
     if (response.statusCode == 200) {
-      return true;
+      return json.decode(response.body);
     } else {
-      return false;
+      print('Failed to register user: ${response.body}');
+      return null;
     }
-    ;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Registrarse'),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              TextFormField(
-                controller: nombreApellidoController,
-                decoration: InputDecoration(labelText: 'Nombre y Apellido'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, introduce tu nombre y apellido.';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: usuarioController,
-                decoration: InputDecoration(labelText: 'Nombre de Usuario'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, introduce un nombre de usuario.';
-                  } else if (value.length < 6) {
-                    return 'El nombre de usuario debe tener al menos 6 caracteres.';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: correoController,
-                decoration: InputDecoration(labelText: 'Correo Electrónico'),
-                validator: (value) {
-                  if (value == null || !value.contains('@')) {
-                    return 'Introduce un correo válido.';
-                  }
-                  return null;
-                },
-              ),
-              _buildPasswordTextField(
-                controller: passwordController,
-                labelText: 'Contraseña',
-              ),
-              _buildPasswordTextField(
-                controller: confirmPasswordController,
-                labelText: 'Confirmar Contraseña',
-              ),
-              SizedBox(height: 20), // Agregamos espacio arriba de los términos
-              Row(
-                children: [
-                  Checkbox(
-                    value: aceptaTerminos,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        aceptaTerminos = value ?? false;
-                      });
-                    },
-                  ),
-                  Divider(),
-                  GestureDetector(
-                    onTap: _mostrarTerminosYCondiciones,
-                    child: Text('Acepto los términos y condiciones'),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20), // Agregamos espacio debajo del botón
-              ElevatedButton(
-                onPressed: _submitForm,
-                child: Text('Registrarse'),
-              ),
-            ],
-          ),
-        ),
-      ),
+  Future<bool> createWallet({required int userId}) async {
+    final response = await http.post(
+      Uri.parse('https://api2.parkingtalcahuano.cl/wallets/'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({"user_id": userId, "balance": 0}),
     );
+
+    return response.statusCode == 200;
+  }
+
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final nombreApellido = nombreApellidoController.text.trim();
+    final usuario = usuarioController.text.trim();
+    final correo = correoController.text.trim();
+    final password = passwordController.text.trim();
+    final confirmPassword = confirmPasswordController.text.trim();
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Las contraseñas no coinciden')),
+      );
+      return;
+    }
+
+    if (!aceptaTerminos) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Debe aceptar los términos y condiciones')),
+      );
+      return;
+    }
+
+    final userExists = await checkUserExistence(usuario, correo);
+    if (userExists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('El usuario o correo ya existe')),
+      );
+      return;
+    }
+
+    final Map<String, dynamic>? user = await registerUser(
+      name: nombreApellido,
+      username: usuario,
+      email: correo,
+      password: password,
+      role: 'user',
+      is_active: true,
+    );
+
+    if (user != null && user.containsKey('id')) {
+      final bool walletCreated = await createWallet(userId: user['id']);
+      if (walletCreated) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Usuario registrado con éxito')),
+        );
+        // You can navigate to another screen here, if needed
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al crear la billetera del usuario')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al registrar el usuario')),
+      );
+    }
   }
 
   void _mostrarTerminosYCondiciones() {
@@ -183,9 +163,10 @@ class _RegistroScreenState extends State<RegistroScreen> {
             child: ListBody(
               children: <Widget>[
                 Text(
-                    "1. Al utilizar esta aplicación, usted se compromete a pagar todas las tarifas asociadas."),
+                    "1. Al utilizar esta aplicación, usted se compromete a pagar todas las tarifas asociadas, incluyendo cargos a la tarifa por incumplimiento."),
                 SizedBox(height: 10),
-                Text("2. No nos hacemos responsables de daños a vehículos."),
+                Text(
+                    "2. No nos hacemos responsables de daños a vehículos ni sus pertenencias."),
                 SizedBox(height: 10),
                 Text("3. Aplicación solo para mayores de edad."),
                 // ... Puedes agregar más términos aquí...
@@ -205,104 +186,117 @@ class _RegistroScreenState extends State<RegistroScreen> {
     );
   }
 
-  Future<void> _submitForm() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    if (passwordController.text != confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Las contraseñas no coinciden.'),
-        ),
-      );
-      return;
-    }
-
-    if (!aceptaTerminos) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Debes aceptar los términos y condiciones.'),
-        ),
-      );
-      return;
-    }
-
-    bool userExists = await checkUserExistence(
-      usuarioController.text,
-      correoController.text,
-    );
-
-    if (userExists) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('El nombre de usuario o el correo ya están en uso.'),
-        ),
-      );
-      return;
-    }
-
-    bool registered = await registerUser(
-      name: nombreApellidoController.text,
-      username: usuarioController.text,
-      email: correoController.text,
-      password: (passwordController.text),
-      role:'user',
-      is_active: true,
-    );
-    print(registered);
-
-    if (registered) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Registro exitoso! Bienvenido!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              LoginScreen(), // Asumiendo que tu pantalla de login se llama `LoginScreen`
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              'Hubo un problema al registrarse. Por favor, inténtalo de nuevo.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  Widget _buildPasswordTextField({
-    required TextEditingController controller,
-    required String labelText,
-  }) {
-    return TextFormField(
-      controller: controller,
-      obscureText: _obscurePassword,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Por favor, introduce una contraseña.';
-        } else if (value.length < 8) {
-          return 'La contraseña debe tener al menos 8 caracteres.';
-        }
-        return null;
-      },
-      decoration: InputDecoration(
-        labelText: labelText,
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+  @override
+  Widget build(BuildContext context) {
+    // The build method starts here.
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Registro'),
+      ),
+      body: SingleChildScrollView(
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: <Widget>[
+                TextFormField(
+                  controller: nombreApellidoController,
+                  decoration: InputDecoration(labelText: 'Nombre y Apellido'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Este campo es requerido';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: usuarioController,
+                  decoration: InputDecoration(labelText: 'Usuario'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Este campo es requerido';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: correoController,
+                  decoration: InputDecoration(labelText: 'Correo electrónico'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Este campo es requerido';
+                    } else if (!value.contains('@')) {
+                      return 'Correo no válido';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: passwordController,
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    labelText: 'Contraseña',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Este campo es requerido';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: confirmPasswordController,
+                  obscureText: _obscurePassword,
+                  decoration:
+                      InputDecoration(labelText: 'Confirmar Contraseña'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Este campo es requerido';
+                    } else if (value != passwordController.text) {
+                      return 'Las contraseñas no coinciden';
+                    }
+                    return null;
+                  },
+                ),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: aceptaTerminos,
+                      onChanged: (bool? newValue) {
+                        setState(() {
+                          aceptaTerminos = newValue ?? false;
+                        });
+                      },
+                    ),
+                    GestureDetector(
+                      onTap: _mostrarTerminosYCondiciones,
+                      child: const Text(
+                        'Acepto los términos y condiciones',
+                        style: TextStyle(decoration: TextDecoration.underline),
+                      ),
+                    ),
+                  ],
+                ),
+                ElevatedButton(
+                  onPressed: _submitForm,
+                  child: Text('Registrarse'),
+                ),
+              ],
+            ),
           ),
-          onPressed: () {
-            setState(() {
-              _obscurePassword = !_obscurePassword;
-            });
-          },
         ),
       ),
     );

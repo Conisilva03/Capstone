@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'tabs.dart';
-import 'package:provider/provider.dart';
-import 'dark_mode_manager.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RecargarDineroScreen extends StatefulWidget {
   @override
@@ -12,6 +12,43 @@ class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
   TextEditingController _montoController = TextEditingController();
   double saldo = 0.0;
   String? metodoDePagoSeleccionado;
+
+  Future<int?> fetchUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('user_id');
+  }
+
+  Future<void> recargarDinero(double amount) async {
+    int? userId = await fetchUserId();
+    if (userId != null) {
+      String apiUrl = 'https://api2.parkingtalcahuano.cl/wallet/charge/$userId';
+
+      Map<String, String> headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+
+      Map<String, dynamic> body = {
+        'user_id': userId,
+        'amount': amount,
+      };
+
+      http.Response response = await http.post(
+        Uri.parse(apiUrl),
+        headers: headers,
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 200) {
+        print("Recarga exitosa");
+      } else {
+        print("Error al recargar: ${response.statusCode}");
+        print("Body: ${response.body}");
+      }
+    } else {
+      print("No se pudo obtener el ID del usuario");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +62,7 @@ class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Saldo: \$${saldo.toStringAsFixed(2)}',
+              'Recargar Dinero',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -40,66 +77,87 @@ class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
               ),
             ),
             SizedBox(height: 10),
-            GestureDetector(
-              onTap: () {
-                // Abre el teclado numérico cuando se toca el campo de texto
-                FocusScope.of(context).requestFocus(FocusNode());
-              },
-              child: TextFormField(
-                controller: _montoController,
-                keyboardType: TextInputType.number, // Teclado numérico
-                decoration: InputDecoration(
-                  labelText: 'Ingrese el monto',
-                  border: OutlineInputBorder(),
-                ),
+            TextFormField(
+              controller: _montoController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Ingrese el monto',
+                border: OutlineInputBorder(),
               ),
             ),
             SizedBox(height: 20),
             Text(
-              'Métodos de Pago:',
+              'Método de Pago:',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            RadioListTile<String>(
-              title: Text('Tarjeta de Crédito'),
-              value: 'tarjeta_credito',
-              groupValue: metodoDePagoSeleccionado,
-              onChanged: (String? value) {
-                setState(() {
-                  metodoDePagoSeleccionado = value;
-                });
-              },
-            ),
-            RadioListTile<String>(
-              title: Text('Transferencia Bancaria'),
-              value: 'transferencia',
-              groupValue: metodoDePagoSeleccionado,
-              onChanged: (String? value) {
-                setState(() {
-                  metodoDePagoSeleccionado = value;
-                });
-              },
-            ),
+            ..._buildPaymentMethods(),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                // Lógica para recargar
-                // Aquí puedes verificar el método de pago seleccionado y realizar la recarga correspondiente.
+              onPressed: () async {
+                double? amount = double.tryParse(_montoController.text);
+                if (amount != null) {
+                  await recargarDinero(amount);
+                } else {
+                  _showErrorDialog();
+                }
               },
               style: ElevatedButton.styleFrom(
                 primary: Colors.lightBlue,
                 onPrimary: Colors.white,
-                padding: EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 10), // Ajusta el tamaño del botón
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
               child: Text('Recargar', style: TextStyle(fontSize: 14)),
             ),
           ],
         ),
       ),
-      drawer: buildDrawer(context),
+      //drawer: buildDrawer(context), // Assuming this method is defined elsewhere in your code.
+    );
+  }
+
+  List<Widget> _buildPaymentMethods() {
+    return [
+      RadioListTile<String>(
+        title: Text('Tarjeta de Crédito'),
+        value: 'tarjeta_credito',
+        groupValue: metodoDePagoSeleccionado,
+        onChanged: (String? value) {
+          setState(() {
+            metodoDePagoSeleccionado = value;
+          });
+        },
+      ),
+      RadioListTile<String>(
+        title: Text('Transferencia Bancaria'),
+        value: 'transferencia',
+        groupValue: metodoDePagoSeleccionado,
+        onChanged: (String? value) {
+          setState(() {
+            metodoDePagoSeleccionado = value;
+          });
+        },
+      ),
+    ];
+  }
+
+  void _showErrorDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text('Por favor, ingrese un monto válido.'),
+        actions: <Widget>[
+          TextButton(
+            child: Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ),
     );
   }
 
