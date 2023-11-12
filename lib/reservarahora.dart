@@ -21,15 +21,15 @@ class ParkingSpace {
   ParkingSpace(this.id, this.location, this.name, this.description, this.locationAddress, this.state);
 }
 
-class ReservarScreen extends StatefulWidget {
+class ReservarAhoraScreen extends StatefulWidget {
   final String id;
-  ReservarScreen({required this.id});
+  ReservarAhoraScreen({required this.id});
 
   @override
-  _ReservarScreenState createState() => _ReservarScreenState();
+  _ReservarAhoraScreenState createState() => _ReservarAhoraScreenState();
 }
 
-class _ReservarScreenState extends State<ReservarScreen> {
+class _ReservarAhoraScreenState extends State<ReservarAhoraScreen> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController fechaController = TextEditingController();
   TextEditingController horaController = TextEditingController();
@@ -273,7 +273,7 @@ Future<int?> fetchUserId() async {
   return userId;
 }
     // Function to send parking movement data
-  Future<void> sendParkingMovementData(int? userId, String entryTime, String exitTime, String parkingSpotId, double totalCost, String vehicleType, String licensePlate, String notes) async {
+  Future<void> sendParkingMovementData(int? userId, String entryTime, String exitTime, int parkingSpotId, double totalCost, String vehicleType, String licensePlate, String notes) async {
     try {
       final Map<String, dynamic> parkingMovementData = {
         "user_id": userId,
@@ -360,8 +360,19 @@ Future<String> checkReservationInRange(String spotId, String startDateTime, Stri
 
 
 int generateShortNumericId() {
-  final Random random = Random();
-  return random.nextInt(1000000); // Número aleatorio de hasta 9 dígitos
+  // Get the current timestamp (milliseconds since epoch)
+  int timestamp = DateTime.now().millisecondsSinceEpoch;
+
+  // Generate a random number between 0 and 9999
+  int random = Random().nextInt(10000);
+
+  // Concatenate timestamp and random number to create a numeric ID
+  String numericIdString = '$timestamp$random';
+
+  // Parse the string into an integer
+  int numericId = int.parse(numericIdString);
+
+  return numericId;
 }
 
 
@@ -401,11 +412,10 @@ Future<void> createReservation(String startDateTime, String endDateTime) async {
       print('Error: Insufficient balance for reservation.');
       return;
     }
-    int idcar=generateShortNumericId();
-    print(idcar);
+    print(generateShortNumericId());
 
     final Map<String, dynamic> reservationData = {
-      "id": idcar,
+      "id": generateShortNumericId(),
       "user_id": userId,
       "parking_spot_id": widget.id,
       "start_time": startDateTime,
@@ -495,18 +505,14 @@ Navigator.of(context).push(
       onAccept: () async {
         // Accept reservation logic here, e.g., createReservation function
         await createReservation(startDateTime, endDateTime);
-        print(userId);
-        print(startDateTime);
-        print(widget.id);
-        print('normal');
         await sendParkingMovementData(userId,
       startDateTime,
       endDateTime,
-      widget.id, // Assuming widget.id is the parking_spot_id
+      int.parse(widget.id), // Assuming widget.id is the parking_spot_id
       double.parse(reservationCost), // Assuming cost is the total_cost
       'normal', // Replace with the actual vehicle type
       'licensePlate', // Replace with the actual license plate
-      'Reserva', // Replace with any additional notes or an empty string
+      'Vacio', // Replace with any additional notes or an empty string
     );
 
         // Show success message

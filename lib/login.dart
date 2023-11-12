@@ -32,6 +32,8 @@ class _LoginScreenState extends State<LoginScreen> {
         Uri.parse('https://api2.parkingtalcahuano.cl/login'),
         headers: <String, String>{
           'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Mobile-Source': 'MobileApp', // Add this line for the custom header
+
         },
         body: {
           'username': email,

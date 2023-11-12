@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'updateCar.dart';
 
 class ListarVehiculosScreen extends StatefulWidget {
   @override
@@ -41,6 +42,7 @@ class _ListarVehiculosScreenState extends State<ListarVehiculosScreen> {
               .where((vehiculo) => vehiculo.is_active)
               .toList();
         });
+        print(data);
       } else {
         print('Failed to load vehicle data');
       }
@@ -69,15 +71,20 @@ class _ListarVehiculosScreenState extends State<ListarVehiculosScreen> {
               DataCell(Text(vehiculo.modelo)),
               DataCell(Text('${vehiculo.anio}')),
               DataCell(Text(vehiculo.placa)),
-              DataCell(ElevatedButton(
-                child: Text('Deshabilitar'),
-                onPressed: () {
-                  // Lógica para deshabilitar el vehículo. Podrías usar un API call.
-                  setState(() {
-                    vehiculos.remove(vehiculo);
-                  });
-                },
-              )),
+              // Inside DataRow(cells: [...])
+
+DataCell(ElevatedButton(
+  child: Text('Editar'),
+  onPressed: () {
+    // Navigate to the UpdateCarScreen with the car ID
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => UpdateCarScreen(carId: vehiculo.id),
+      ),
+    );
+  },
+)),
             ]);
           }).toList(),
         ),
@@ -87,6 +94,7 @@ class _ListarVehiculosScreenState extends State<ListarVehiculosScreen> {
 }
 
 class Vehiculo {
+  final int id;
   final String marca;
   final String modelo;
   final int anio;
@@ -94,6 +102,7 @@ class Vehiculo {
   final bool is_active;
 
   Vehiculo({
+    required this.id,
     required this.marca,
     required this.modelo,
     required this.anio,
@@ -103,6 +112,7 @@ class Vehiculo {
 
   factory Vehiculo.fromJson(Map<String, dynamic> json) {
     return Vehiculo(
+      id: json['id'],
       marca: json['brand'],
       modelo: json['model'],
       anio: json['year'],

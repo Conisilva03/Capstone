@@ -13,7 +13,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'soporte.dart';
-
+import 'misreservas.dart';
 
 Future<Map<String, dynamic>> fetchDataAndStoreData(int userId) async {
   try {
@@ -188,7 +188,7 @@ Widget buildDrawer(BuildContext context) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => MapsScreen(),
+                builder: (context) => MisReservasScreen(),
               ),
             );
           },
