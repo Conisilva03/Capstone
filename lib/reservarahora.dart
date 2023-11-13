@@ -21,15 +21,15 @@ class ParkingSpace {
   ParkingSpace(this.id, this.location, this.name, this.description, this.locationAddress, this.state);
 }
 
-class ReservarAhoraScreen extends StatefulWidget {
+class ReservarScreen extends StatefulWidget {
   final String id;
-  ReservarAhoraScreen({required this.id});
+  ReservarScreen({required this.id});
 
   @override
-  _ReservarAhoraScreenState createState() => _ReservarAhoraScreenState();
+  _ReservarScreenState createState() => _ReservarScreenState();
 }
 
-class _ReservarAhoraScreenState extends State<ReservarAhoraScreen> {
+class _ReservarScreenState extends State<ReservarScreen> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController fechaController = TextEditingController();
   TextEditingController horaController = TextEditingController();
@@ -73,6 +73,11 @@ void initState() {
   selectedTime = TimeOfDay.now();
   horaController.text =
       '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}';
+
+// Inicializar el campo de fecha con la fecha actual
+  selectedDate = DateTime.now();
+  fechaController.text =
+    '${selectedDate!.day.toString().padLeft(2, '0')}/${selectedDate!.month.toString().padLeft(2, '0')}/${selectedDate!.year}';
 
   // Check and update the state of the parking space
   checkAndUpdateParkingSpaceState();
@@ -273,7 +278,7 @@ Future<int?> fetchUserId() async {
   return userId;
 }
     // Function to send parking movement data
-  Future<void> sendParkingMovementData(int? userId, String entryTime, String exitTime, int parkingSpotId, double totalCost, String vehicleType, String licensePlate, String notes) async {
+  Future<void> sendParkingMovementData(int? userId, String entryTime, String exitTime, String parkingSpotId, double totalCost, String vehicleType, String licensePlate, String notes) async {
     try {
       final Map<String, dynamic> parkingMovementData = {
         "user_id": userId,
@@ -360,19 +365,8 @@ Future<String> checkReservationInRange(String spotId, String startDateTime, Stri
 
 
 int generateShortNumericId() {
-  // Get the current timestamp (milliseconds since epoch)
-  int timestamp = DateTime.now().millisecondsSinceEpoch;
-
-  // Generate a random number between 0 and 9999
-  int random = Random().nextInt(10000);
-
-  // Concatenate timestamp and random number to create a numeric ID
-  String numericIdString = '$timestamp$random';
-
-  // Parse the string into an integer
-  int numericId = int.parse(numericIdString);
-
-  return numericId;
+  final Random random = Random();
+  return random.nextInt(1000000); // Número aleatorio de hasta 9 dígitos
 }
 
 
@@ -412,10 +406,11 @@ Future<void> createReservation(String startDateTime, String endDateTime) async {
       print('Error: Insufficient balance for reservation.');
       return;
     }
-    print(generateShortNumericId());
+    int idcar=generateShortNumericId();
+    print(idcar);
 
     final Map<String, dynamic> reservationData = {
-      "id": generateShortNumericId(),
+      "id": idcar,
       "user_id": userId,
       "parking_spot_id": widget.id,
       "start_time": startDateTime,
@@ -505,14 +500,18 @@ Navigator.of(context).push(
       onAccept: () async {
         // Accept reservation logic here, e.g., createReservation function
         await createReservation(startDateTime, endDateTime);
+        print(userId);
+        print(startDateTime);
+        print(widget.id);
+        print('normal');
         await sendParkingMovementData(userId,
       startDateTime,
       endDateTime,
-      int.parse(widget.id), // Assuming widget.id is the parking_spot_id
+      widget.id, // Assuming widget.id is the parking_spot_id
       double.parse(reservationCost), // Assuming cost is the total_cost
       'normal', // Replace with the actual vehicle type
       'licensePlate', // Replace with the actual license plate
-      'Vacio', // Replace with any additional notes or an empty string
+      'Reserva', // Replace with any additional notes or an empty string
     );
 
         // Show success message
@@ -604,7 +603,7 @@ void showInsufficientBalanceAlert() {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Reservar Estacionamiento'),
+        title: Text('Ocupar Estacionamiento'),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -615,7 +614,7 @@ void showInsufficientBalanceAlert() {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Reservar Estacionamiento',
+                  'Ocupar Estacionamiento',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -642,7 +641,6 @@ void showInsufficientBalanceAlert() {
                     children: [
                       Text('Nombre: ${parkingSpace!.name}'),
                       Text('Descripción: ${parkingSpace!.description}'),
-                      Text('Dirección: ${parkingSpace!.locationAddress}'),
                       Text('Estado: ${parkingSpace!.state ? 'Disponible' : 'Ocupado'}'),
                       Text('Ubicación: ${parkingSpace!.location.toString()}'),
                     ],
