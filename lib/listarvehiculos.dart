@@ -63,6 +63,7 @@ class _ListarVehiculosScreenState extends State<ListarVehiculosScreen> {
             DataColumn(label: Text('Modelo')),
             DataColumn(label: Text('Año')),
             DataColumn(label: Text('Placa')),
+            DataColumn(label: Text('En Uso')),
             DataColumn(label: Text('Acción')),
           ],
           rows: vehiculos.map((vehiculo) {
@@ -71,6 +72,8 @@ class _ListarVehiculosScreenState extends State<ListarVehiculosScreen> {
               DataCell(Text(vehiculo.modelo)),
               DataCell(Text('${vehiculo.anio}')),
               DataCell(Text(vehiculo.placa)),
+              DataCell(Text(vehiculo.enUso ? 'Sí' : 'No')),
+
               // Inside DataRow(cells: [...])
 
 DataCell(ElevatedButton(
@@ -100,6 +103,7 @@ class Vehiculo {
   final int anio;
   final String placa;
   final bool is_active;
+  final bool enUso;
 
   Vehiculo({
     required this.id,
@@ -108,6 +112,7 @@ class Vehiculo {
     required this.anio,
     required this.placa,
     required this.is_active,
+    required this.enUso,
   });
 
   factory Vehiculo.fromJson(Map<String, dynamic> json) {
@@ -118,6 +123,7 @@ class Vehiculo {
       anio: json['year'],
       placa: json['license_plate'],
       is_active: json['is_active'],
+      enUso: json['en_uso'],
     );
   }
 }

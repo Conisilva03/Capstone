@@ -21,15 +21,15 @@ class ParkingSpace {
   ParkingSpace(this.id, this.location, this.name, this.description, this.locationAddress, this.state);
 }
 
-class ReservarScreen extends StatefulWidget {
+class ReservarAhoraScreen extends StatefulWidget {
   final String id;
-  ReservarScreen({required this.id});
+  ReservarAhoraScreen({required this.id});
 
   @override
-  _ReservarScreenState createState() => _ReservarScreenState();
+  _ReservarAhoraScreenState createState() => _ReservarAhoraScreenState();
 }
 
-class _ReservarScreenState extends State<ReservarScreen> {
+class _ReservarAhoraScreenState extends State<ReservarAhoraScreen> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController fechaController = TextEditingController();
   TextEditingController horaController = TextEditingController();
@@ -70,14 +70,10 @@ void initState() {
   super.initState();
   loadParkingSpace();
   // Inicializar el campo de hora de inicio con la hora actual
-  selectedTime = TimeOfDay.now();
+  selectedTime = TimeOfDay(hour: 8, minute: 0); // Set the start time to 8:00 AM
   horaController.text =
       '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}';
 
-// Inicializar el campo de fecha con la fecha actual
-  selectedDate = DateTime.now();
-  fechaController.text =
-    '${selectedDate!.day.toString().padLeft(2, '0')}/${selectedDate!.month.toString().padLeft(2, '0')}/${selectedDate!.year}';
 
   // Check and update the state of the parking space
   checkAndUpdateParkingSpaceState();
@@ -266,9 +262,10 @@ Future<void> checkAndUpdateParkingSpaceState() async {
     );
     if (pickedDate != null) {
       setState(() {
-        selectedDate = pickedDate;
+        selectedDate = DateTime.now();
         fechaController.text =
             '${selectedDate!.day.toString().padLeft(2, '0')}/${selectedDate!.month.toString().padLeft(2, '0')}/${selectedDate!.year}';
+
       });
     }
   }
@@ -603,7 +600,7 @@ void showInsufficientBalanceAlert() {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Ocupar Estacionamiento'),
+        title: Text('Reservar Estacionamiento'),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -614,7 +611,7 @@ void showInsufficientBalanceAlert() {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Ocupar Estacionamiento',
+                  'Reservar Estacionamiento',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -829,3 +826,5 @@ bool isValidTime(String input) {
   final RegExp regex = RegExp(r'^\d{2}:\d{2}$');
   return regex.hasMatch(input);
 }
+
+
