@@ -52,7 +52,7 @@ class _AgregarVehiculosScreenState extends State<AgregarVehiculosScreen> {
       "brand": _marcaController.text,
       "model": _modeloController.text,
       "is_active": true,
-    
+      "in_use":false
     };
 
     final response = await http.post(
