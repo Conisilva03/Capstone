@@ -98,8 +98,8 @@ class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
   List<Widget> _buildPaymentMethods() {
     return [
       RadioListTile<String>(
-        title: Text('Tarjeta de Crédito'),
-        value: 'tarjeta_credito',
+        title: Text('WebPay'),
+        value: 'webpay',
         groupValue: metodoDePagoSeleccionado,
         onChanged: (String? value) {
           setState(() {
@@ -107,16 +107,7 @@ class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
           });
         },
       ),
-      RadioListTile<String>(
-        title: Text('Transferencia Bancaria'),
-        value: 'transferencia',
-        groupValue: metodoDePagoSeleccionado,
-        onChanged: (String? value) {
-          setState(() {
-            metodoDePagoSeleccionado = value;
-          });
-        },
-      ),
+
     ];
   }
 
