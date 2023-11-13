@@ -21,15 +21,15 @@ class ParkingSpace {
   ParkingSpace(this.id, this.location, this.name, this.description, this.locationAddress, this.state);
 }
 
-class ReservarAhoraScreen extends StatefulWidget {
+class ReservarScreen extends StatefulWidget {
   final String id;
-  ReservarAhoraScreen({required this.id});
+  ReservarScreen({required this.id});
 
   @override
-  _ReservarAhoraScreenState createState() => _ReservarAhoraScreenState();
+  _ReservarScreenState createState() => _ReservarScreenState();
 }
 
-class _ReservarAhoraScreenState extends State<ReservarAhoraScreen> {
+class _ReservarScreenState extends State<ReservarScreen> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController fechaController = TextEditingController();
   TextEditingController horaController = TextEditingController();
@@ -70,10 +70,14 @@ void initState() {
   super.initState();
   loadParkingSpace();
   // Inicializar el campo de hora de inicio con la hora actual
-  selectedTime = TimeOfDay(hour: 8, minute: 0); // Set the start time to 8:00 AM
+  selectedTime = TimeOfDay.now();
   horaController.text =
       '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}';
 
+// Inicializar el campo de fecha con la fecha actual
+  selectedDate = DateTime.now();
+  fechaController.text =
+    '${selectedDate!.day.toString().padLeft(2, '0')}/${selectedDate!.month.toString().padLeft(2, '0')}/${selectedDate!.year}';
 
   // Check and update the state of the parking space
   checkAndUpdateParkingSpaceState();
@@ -262,10 +266,9 @@ Future<void> checkAndUpdateParkingSpaceState() async {
     );
     if (pickedDate != null) {
       setState(() {
-        selectedDate = DateTime.now();
+        selectedDate = pickedDate;
         fechaController.text =
             '${selectedDate!.day.toString().padLeft(2, '0')}/${selectedDate!.month.toString().padLeft(2, '0')}/${selectedDate!.year}';
-
       });
     }
   }
@@ -600,7 +603,7 @@ void showInsufficientBalanceAlert() {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Reservar Estacionamiento'),
+        title: Text('Ocupar Estacionamiento'),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -611,7 +614,7 @@ void showInsufficientBalanceAlert() {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Reservar Estacionamiento',
+                  'Ocupar Estacionamiento',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -638,7 +641,6 @@ void showInsufficientBalanceAlert() {
                     children: [
                       Text('Nombre: ${parkingSpace!.name}'),
                       Text('Descripción: ${parkingSpace!.description}'),
-                      Text('Dirección: ${parkingSpace!.locationAddress}'),
                       Text('Estado: ${parkingSpace!.state ? 'Disponible' : 'Ocupado'}'),
                       Text('Ubicación: ${parkingSpace!.location.toString()}'),
                     ],

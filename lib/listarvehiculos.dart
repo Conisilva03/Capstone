@@ -29,27 +29,28 @@ class _ListarVehiculosScreenState extends State<ListarVehiculosScreen> {
       fetchVehicleData(userId);
     }
   }
-
-  Future<void> fetchVehicleData(user_id) async {
-    final apiUrl = Uri.parse('https://api2.parkingtalcahuano.cl/cars/$user_id');
-    try {
-      final response = await http.get(apiUrl);
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          vehiculos = data
-              .map((item) => Vehiculo.fromJson(item))
-              .where((vehiculo) => vehiculo.is_active)
-              .toList();
-        });
-        print(data);
-      } else {
-        print('Failed to load vehicle data');
-      }
-    } catch (exception) {
-      print('Exception while fetching vehicle data: $exception');
+  
+Future<void> fetchVehicleData(user_id) async {
+  final apiUrl = Uri.parse('https://api2.parkingtalcahuano.cl/cars/$user_id');
+  try {
+    final response = await http.get(apiUrl);
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      setState(() {
+        vehiculos = data
+            .map((item) => Vehiculo.fromJson(item))
+            .where((vehiculo) => vehiculo.is_active)
+            .toList();
+      });
+      print(data);
+    } else {
+      print('Failed to load vehicle data');
     }
+  } catch (exception) {
+    print('Exception while fetching vehicle data: $exception');
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

@@ -720,7 +720,7 @@ void showInsufficientBalanceAlert() {
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _submitForm,
-                  child: Text('Reservar'),
+                  child: Text('Ocupar'),
                 ),
               ],
             ),
