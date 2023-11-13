@@ -603,7 +603,7 @@ void showInsufficientBalanceAlert() {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Ocupar Estacionamiento'),
+        title: Text('Reservar Estacionamiento'),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -614,7 +614,7 @@ void showInsufficientBalanceAlert() {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Ocupar Estacionamiento',
+                  'Reservar Estacionamiento',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
