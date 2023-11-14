@@ -86,6 +86,13 @@ import 'inicio.dart';
       }
     }
 
+    bool isCarInUse(String licensePlate) {
+      return activeReservations.any((reservation) =>
+          reservation['vehicle_license_plate'] == licensePlate &&
+          DateTime.parse(reservation['start_time']).isBefore(DateTime.now()) &&
+          DateTime.parse(reservation['end_time']).isAfter(DateTime.now()));
+    }
+
     void showTimerAlert(int reservationId, String endDateTime) {
       DateTime now = DateTime.now();
       DateTime endTime = DateTime.parse(endDateTime);
@@ -111,6 +118,40 @@ import 'inicio.dart';
         );
       }
     }
+
+  bool isWithinTimeLimit(String endDateTime) {
+    DateTime now = DateTime.now();
+    DateTime endTime = DateTime.parse(endDateTime);
+    Duration timeUntilEnd = endTime.difference(now);
+
+    return timeUntilEnd <= Duration(minutes: 15) && timeUntilEnd.inMinutes >= 0;
+  }
+
+
+
+  void sendPostRequest() async {
+    final url = Uri.parse('http://192.168.1.102/move/forward');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json', 
+        },
+      );
+      print('Response status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+
+      if (response.statusCode == 200) {
+        print('Solicitud POST enviada con éxito');
+      } else {
+        print('Error al enviar la solicitud POST. Código de estado: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error al enviar la solicitud POST: $e');
+    }
+  }
 
   Future<void> sendParkingMovementData(int? userId, String entryTime, String exitTime, String parkingSpotId, double totalCost, String vehicleType, String licensePlate, String notes) async {
     try {
@@ -143,6 +184,24 @@ import 'inicio.dart';
     } catch (e) {
       print('Error sending parking movement data: $e');
       // Handle error as needed.
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchUserCarData(int userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://api2.parkingtalcahuano.cl/cars/in-use/$userId'),
+        headers: {'accept': 'application/json'},
+      );
+  
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to load user car data');
+      }
+    } catch (e) {
+      print('Error fetching user car data: $e');
+      return {};
     }
   }
 
@@ -274,7 +333,7 @@ import 'inicio.dart';
       }
     }
 
-void _showMarkerInfo(BuildContext context, ParkingSpace parkingSpace) {
+void _showMarkerInfo(BuildContext context, ParkingSpace parkingSpace) async {
   final isParkingSpaceAvailable = activeReservations.isEmpty ||
       !activeReservations.any((reservation) =>
           reservation['parking_spot_id'] == parkingSpace.id);
@@ -283,8 +342,12 @@ void _showMarkerInfo(BuildContext context, ParkingSpace parkingSpace) {
       reservation['parking_spot_id'] == parkingSpace.id &&
       DateTime.parse(reservation['start_time']).isBefore(DateTime.now()) &&
       DateTime.parse(reservation['end_time']).isAfter(DateTime.now()));
+  int userId = (await fetchUserId()) ?? 0; // Use a default value if fetchUserId() returns null
+Map<String, dynamic> carData = await fetchUserCarData(userId);
 
+  String licensePlate = carData['license_plate'] ?? 'Unknown';
 
+  if (isParkingSpaceAvailable && !isCarInUse(licensePlate)) {
   showModalBottomSheet(
     context: context,
     builder: (context) {
@@ -385,7 +448,15 @@ void _showMarkerInfo(BuildContext context, ParkingSpace parkingSpace) {
         ),
       );
     },
-  );
+  );}
+  else{
+    // El espacio está ocupado o el automóvil está en uso, mostrar mensaje correspondiente
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Este espacio de estacionamiento no está disponible para este vehiculo.'),
+      ),
+    );
+  }
 }
 
 
@@ -501,6 +572,24 @@ List<Widget> buildReservations() {
                   ),
                   child: Text('Cancelar', style: TextStyle(fontSize: 16, color: Colors.white)),
                 ),
+                ElevatedButton(
+      onPressed: () {
+        if (isWithinTimeLimit(reservation['end_time'])) {
+          sendPostRequest(); // Función para enviar la solicitud POST
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('El tiempo límite para enviar la solicitud POST ha pasado.'),
+            ),
+          );
+        }
+      },
+      style: ElevatedButton.styleFrom(
+        primary: Colors.orange, // Puedes cambiar el color según tus preferencias
+      ),
+      child: Text('Enviar Solicitud POST'),
+    ),
+
               ],
             ),
           ],

@@ -86,6 +86,27 @@ void initState() {
   fetchAndUpdateWalletBalance();
 }
 
+
+Future<Map<String, dynamic>> fetchUserCarData(int userId) async {
+  try {
+    final response = await http.get(
+      Uri.parse('https://api2.parkingtalcahuano.cl/cars/in-use/$userId'),
+      headers: {'accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception('Failed to load user car data');
+    }
+  } catch (e) {
+    print('Error fetching user car data: $e');
+    return {};
+  }
+}
+
+
+
 Future<void> fetchAndUpdateWalletBalance() async {
   try {
     // Fetch the user ID
@@ -395,8 +416,15 @@ Future<void> createReservation(String startDateTime, String endDateTime) async {
       return;
     }
 
+    // Fetch the user's car information
+    Map<String, dynamic> carData = await fetchUserCarData(userId);
+// Extract the license plate from the car data
+    String licensePlate = carData['license_plate'] ?? 'Unknown';
+
     // Fetch the user's wallet information
     Map<String, dynamic> wallet = await fetchWallet(userId);
+
+    
 
     // Check if the wallet balance is greater than the reservation fee
     int reservationFee = 15; 
@@ -416,6 +444,7 @@ Future<void> createReservation(String startDateTime, String endDateTime) async {
       "start_time": startDateTime,
       "end_time": endDateTime,
       "is_active": true,
+      "license_plate":licensePlate,
     };
 
     print('Check monto billetera: $reservationData');
@@ -504,13 +533,18 @@ Navigator.of(context).push(
         print(startDateTime);
         print(widget.id);
         print('normal');
+        // Fetch the user's car information
+      Map<String, dynamic> carData = await fetchUserCarData(userId ?? 0);
+  
+      // Extract the license plate from the car data
+      String licensePlate = carData['license_plate'] ?? 'Unknown';
         await sendParkingMovementData(userId,
       startDateTime,
       endDateTime,
       widget.id, // Assuming widget.id is the parking_spot_id
       double.parse(reservationCost), // Assuming cost is the total_cost
       'normal', // Replace with the actual vehicle type
-      'licensePlate', // Replace with the actual license plate
+      licensePlate, // Replace with the actual license plate
       'Reserva', // Replace with any additional notes or an empty string
     );
 
