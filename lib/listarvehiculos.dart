@@ -51,6 +51,39 @@ class _ListarVehiculosScreenState extends State<ListarVehiculosScreen> {
     }
   }
 
+  Future<void> actualizarEstadoEnUso(bool nuevoEstado, int id) async {
+    final apiUrl = Uri.parse('https://api2.parkingtalcahuano.cl/cars/$id/in_use?in_use=$nuevoEstado');
+
+    try {
+      final response = await http.put(apiUrl);
+      if (response.statusCode == 200) {
+        print('Estado de en uso actualizado exitosamente');
+
+        // Si el nuevo estado es true, desactivar todos los demás vehículos
+        if (nuevoEstado) {
+          vehiculos.forEach((vehiculo) {
+            if (vehiculo.id != id && vehiculo.enUso) {
+              actualizarEstadoEnUso(false, vehiculo.id);
+            }
+          });
+        }
+
+        Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ListarVehiculosScreen(),
+        ),
+      );
+
+        // Puedes agregar lógica adicional según sea necesario
+      } else {
+        print('Error al actualizar el estado de en uso');
+      }
+    } catch (exception) {
+      print('Excepción al actualizar el estado de en uso: $exception');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,32 +97,36 @@ class _ListarVehiculosScreenState extends State<ListarVehiculosScreen> {
             DataColumn(label: Text('Año')),
             DataColumn(label: Text('Placa')),
             DataColumn(label: Text('En Uso')),
+            DataColumn(label: Text('Usar')),
             DataColumn(label: Text('Acción')),
           ],
           rows: vehiculos.map((vehiculo) {
-            return DataRow(cells: [
-              DataCell(Text(vehiculo.marca)),
-              DataCell(Text(vehiculo.modelo)),
-              DataCell(Text('${vehiculo.anio}')),
-              DataCell(Text(vehiculo.placa)),
-              DataCell(Text(vehiculo.enUso ? 'Sí' : 'No')),
+  return DataRow(cells: [
+    DataCell(Text(vehiculo.marca)),
+    DataCell(Text(vehiculo.modelo)),
+    DataCell(Text('${vehiculo.anio}')),
+    DataCell(Text(vehiculo.placa)),
+    DataCell(Text(vehiculo.enUso ? 'Sí' : 'No')),
+    DataCell(ElevatedButton(
+      child: Text(vehiculo.enUso ? 'Desactivar' : 'Activar'),
+      onPressed: () {
+        actualizarEstadoEnUso(!vehiculo.enUso, vehiculo.id);
+      },
+    )),
+    DataCell(ElevatedButton(
+      child: Text('Editar'),
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => UpdateCarScreen(carId: vehiculo.id),
+          ),
+        );
+      },
+    )),
+  ]);
+}).toList(),
 
-              // Inside DataRow(cells: [...])
-
-DataCell(ElevatedButton(
-  child: Text('Editar'),
-  onPressed: () {
-    // Navigate to the UpdateCarScreen with the car ID
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => UpdateCarScreen(carId: vehiculo.id),
-      ),
-    );
-  },
-)),
-            ]);
-          }).toList(),
         ),
       ),
     );

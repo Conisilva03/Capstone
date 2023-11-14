@@ -274,98 +274,120 @@ import 'inicio.dart';
       }
     }
 
-    void _showMarkerInfo(BuildContext context, ParkingSpace parkingSpace) {
-      showModalBottomSheet(
-        context: context,
-        builder: (context) {
-          final isParkingSpaceAvailable = parkingSpace.state;
+void _showMarkerInfo(BuildContext context, ParkingSpace parkingSpace) {
+  final isParkingSpaceAvailable = activeReservations.isEmpty ||
+      !activeReservations.any((reservation) =>
+          reservation['parking_spot_id'] == parkingSpace.id);
 
-          return Container(
-            padding: EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Información de los lugares de Parking',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 8.0),
-                Text('Nombre: ${parkingSpace.name}'),
-                Text('Descripcion: ${parkingSpace.description}'),
-                Text('Dirección: ${parkingSpace.coordinates}'),
-                RichText(
-                  text: TextSpan(
-                    style: DefaultTextStyle.of(context).style,
-                    children: <TextSpan>[
-                      TextSpan(text: 'Estado: '),
-                      TextSpan(
-                        text: isParkingSpaceAvailable ? "Disponible" : "NO Disponible",
-                        style: TextStyle(
-                          color: isParkingSpaceAvailable ? Colors.green : Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Spacer(),
-                Divider(),
-                if (isParkingSpaceAvailable)
-                  Center(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        primary: Colors.blue,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 50,
-                          vertical: 20,
-                        ),
-                        textStyle: TextStyle(
-                          fontSize: 20,
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                ReservarAhoraScreen(id: parkingSpace.id),
-                          ),
-                        );
-                      },
-                      child: Text('Ocupar Ahora'),
-                    ),
-                  ),
-                Spacer(),
-                Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      primary: Colors.blue[900],
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 50,
-                        vertical: 20,
-                      ),
-                      textStyle: TextStyle(
-                        fontSize: 20,
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              ReservarScreen(id: parkingSpace.id),
-                        ),
-                      );
-                    },
-                    child: Text('Reservar'),
-                  ),
-                ),
-                Spacer(),
-              ],
+  final isParkingSpaceAvailableNow = !activeReservations.any((reservation) =>
+      reservation['parking_spot_id'] == parkingSpace.id &&
+      DateTime.parse(reservation['start_time']).isBefore(DateTime.now()) &&
+      DateTime.parse(reservation['end_time']).isAfter(DateTime.now()));
+
+
+  showModalBottomSheet(
+    context: context,
+    builder: (context) {
+      return Container(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Informacion de Estacionamiento',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-          );
-        },
+            SizedBox(height: 8.0),
+            Text('Name: ${parkingSpace.name}'),
+            Text('Descripcion: ${parkingSpace.description}'),
+            Text('Direccion: ${parkingSpace.coordinates}'),
+            RichText(
+              text: TextSpan(
+                style: DefaultTextStyle.of(context).style,
+                children: <TextSpan>[
+                  TextSpan(text: 'Estado Actual: '),
+                  TextSpan(
+                    text: isParkingSpaceAvailableNow ? "Disponible" : "Ocupado",
+                    style: TextStyle(
+                      color: isParkingSpaceAvailableNow ? Colors.green : Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (!isParkingSpaceAvailable)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 8.0),
+                  Text('Tiempo Ocupado:'),
+                  for (var reservation in activeReservations)
+                    if (reservation['parking_spot_id'] == parkingSpace.id)
+                      Text(
+                        'Desde: ${reservation['start_time']} - Hasta: ${reservation['end_time']}',
+                      ),
+                ],
+              ),
+            Spacer(),
+            Divider(),
+            if (isParkingSpaceAvailable)
+              Center(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    primary: Colors.blue,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 50,
+                      vertical: 20,
+                    ),
+                    textStyle: TextStyle(
+                      fontSize: 20,
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ReservarAhoraScreen(id: parkingSpace.id),
+                      ),
+                    );
+                  },
+                  child: Text('Ocupar Ahora'),
+                ),
+              ),
+            Spacer(),
+            Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.blue[900],
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 50,
+                    vertical: 20,
+                  ),
+                  textStyle: TextStyle(
+                    fontSize: 20,
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ReservarScreen(id: parkingSpace.id),
+                    ),
+                  );
+                },
+                child: Text('Reservar'),
+              ),
+            ),
+            Spacer(),
+          ],
+        ),
       );
-    }
+    },
+  );
+}
+
 
     void filterParkingSpaces(String query) {
       setState(() {
@@ -389,59 +411,59 @@ import 'inicio.dart';
       });
     }
 
-    List<Widget> buildReservations() {
-      return reservations.map<Widget>((reservation) {
-        final DateTime startTime = DateTime.parse(reservation['start_time']);
-        final DateTime endTime = DateTime.parse(reservation['end_time']);
-        final DateTime currentTime = DateTime.now();
+List<Widget> buildReservations() {
+  return reservations.map<Widget>((reservation) {
+    final DateTime startTime = DateTime.parse(reservation['start_time']);
+    final DateTime endTime = DateTime.parse(reservation['end_time']);
+    final DateTime currentTime = DateTime.now();
 
-        final String spot_id =reservation['parking_spot_id'];
+    final String spot_id = reservation['parking_spot_id'];
 
-        final Duration timeUntilStart = startTime.isAfter(currentTime) ? startTime.difference(currentTime) : Duration.zero;
-        final Duration timeUntilEnd = endTime.isAfter(currentTime) ? endTime.difference(currentTime) : Duration.zero;
+    final Duration timeUntilStart =
+        startTime.isAfter(currentTime) ? startTime.difference(currentTime) : Duration.zero;
+    final Duration timeUntilEnd =
+        endTime.isAfter(currentTime) ? endTime.difference(currentTime) : Duration.zero;
 
-        final String startTimerText = timeUntilStart == Duration.zero
-            ? 'Comienza ahora'
-            : 'Comienza en ${timeUntilStart.inMinutes} minutos';
+    final String startTimerText = timeUntilStart == Duration.zero
+        ? 'Comienza ahora'
+        : 'Comienza en ${timeUntilStart.inMinutes} minutos';
 
-        final String endTimerText = timeUntilEnd == Duration.zero
-            ? 'Termina ahora'
-            : 'Termina en ${timeUntilEnd.inMinutes} minutos';
+    final String endTimerText = timeUntilEnd == Duration.zero
+        ? 'Termina ahora'
+        : 'Termina en ${timeUntilEnd.inMinutes} minutos';
 
+    // ALERTA COMMENTADA POR ERROR
+    // showTimerAlert(reservation['id'], reservation['end_time']);
 
-        //ALERTA COMMENTADA POR ERROR
-        //showTimerAlert(reservation['id'], reservation['end_time']);
-
-        return Card(
-          margin: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-          child: ListTile(
-            title: Text(
-              'Reservación ID: ${reservation['id']}',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+      child: ListTile(
+        contentPadding: EdgeInsets.only(top: 10), // Añadir espacio en la parte superior
+        title: Text(
+          'Reservación ID: ${reservation['id']}',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Hora de inicio: ${reservation['start_time']}',
+              style: TextStyle(fontSize: 16),
             ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hora de inicio: ${reservation['start_time']}',
-                  style: TextStyle(fontSize: 16),
-                ),
-                Text(
-                  'Hora de finalización: ${reservation['end_time']}',
-                  style: TextStyle(fontSize: 16),
-                ),
-                Text(
-                  'Tiempo hasta el inicio: $startTimerText',
-                  style: TextStyle(fontSize: 18, color: Colors.green),
-                ),
-                Text(
-                  'Tiempo hasta la finalización: $endTimerText',
-                  style: TextStyle(fontSize: 18, color: Colors.red),
-                ),
-              ],
+            Text(
+              'Hora de finalización: ${reservation['end_time']}',
+              style: TextStyle(fontSize: 16),
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
+            Text(
+              'Tiempo hasta el inicio: $startTimerText',
+              style: TextStyle(fontSize: 18, color: Colors.green),
+            ),
+            Text(
+              'Tiempo hasta la finalización: $endTimerText',
+              style: TextStyle(fontSize: 18, color: Colors.red),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
                   onPressed: () {
@@ -451,28 +473,28 @@ import 'inicio.dart';
                   style: ElevatedButton.styleFrom(
                     primary: Colors.green,
                   ),
-                  child: Text('Agregar tiempo', style: TextStyle(fontSize: 16, color: Colors.white)),
+                  child: Text('Agregar tiempo',
+                      style: TextStyle(fontSize: 16, color: Colors.white)),
                 ),
-                SizedBox(width: 10),
                 ElevatedButton(
                   onPressed: () {
                     showCancelConfirmationDialog(
-                    context,
-                    reservation['id'],
-                    (int reservationId, int refundAmount, int? userId) {
-                      // Handle the cancellation action here
-                      // Add the code to cancel the reservation
-                      updateReservationStatus(reservationId);
-                    },
-                    reservation['end_time'],
-                    spot_id,
-                  );
+                      context,
+                      reservation['id'],
+                      (int reservationId, int refundAmount, int? userId) {
+                        // Handle the cancellation action here
+                        // Add the code to cancel the reservation
+                        updateReservationStatus(reservationId);
+                      },
+                      reservation['end_time'],
+                      spot_id,
+                    );
 
-                  // Redireccionar con Navigator.push
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => InicioScreen()),
-                  );
+                    // Redireccionar con Navigator.push
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => InicioScreen()),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     primary: Colors.red,
@@ -481,10 +503,13 @@ import 'inicio.dart';
                 ),
               ],
             ),
-          ),
-        );
-      }).toList();
-    }
+          ],
+        ),
+      ),
+    );
+  }).toList();
+}
+
 
 
   Future<void> chargeWallet(int userId, int amount) async {
