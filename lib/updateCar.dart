@@ -69,6 +69,29 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
   }
 
 
+Future<void> toggleCarActivity(int carId, bool isActive) async {
+  final String apiUrl = 'https://api2.parkingtalcahuano.cl/cars/$carId/toggle/';
+
+  try {
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {
+        'accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({'is_active': isActive}),
+    );
+
+    if (response.statusCode == 200) {
+      print('Toggle car activity successful.');
+    } else {
+      print('Error toggling car activity: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Error toggling car activity: $e');
+  }
+}
+
 
 
 Future<int?> fetchUserId() async {
@@ -96,6 +119,32 @@ void initState() {
     }
   });
 }
+
+  Future<bool?> showConfirmationDialog() async {
+    return showDialog<bool?>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmación'),
+          content: Text('¿Está seguro de que desea desactivar este auto?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false); // Cancelar
+              },
+              child: Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true); // Confirmar
+              },
+              child: Text('Confirmar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
 
   @override
@@ -130,6 +179,24 @@ void initState() {
                 updateCarDetails();
               },
               child: Text('Actualizar Auto'),
+            ),
+            Divider(),
+            ElevatedButton(
+              onPressed: () async {
+                // Mostrar el cuadro de diálogo de confirmación
+                bool? confirmacion = await showConfirmationDialog();
+
+                if (confirmacion == true) {
+                  // Desactivar el auto solo si se confirma
+                  toggleCarActivity(widget.carId, false);
+                }
+
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => UpdateCarScreen(carId: widget.carId)), 
+                );
+              },
+              child: Text('Desactivar Auto'),
             ),
           ],
         ),

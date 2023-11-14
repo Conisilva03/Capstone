@@ -65,10 +65,13 @@ Future<void> cancelReservation(String reservationId) async {
   }
 }
 
+String? userEmail;
+
 @override
 void initState() {
   super.initState();
   loadParkingSpace();
+  loadUserData();
   // Inicializar el campo de hora de inicio con la hora actual
   selectedTime = TimeOfDay.now();
   horaController.text =
@@ -85,6 +88,37 @@ void initState() {
   // Fetch and update the user's wallet balance
   fetchAndUpdateWalletBalance();
 }
+
+  Future<Map<String, dynamic>?> fetchUserData(int userId) async {
+    try {
+      // Fetch user data from API using userId...
+      final response = await http.get(
+        Uri.parse('https://api2.parkingtalcahuano.cl/users/$userId'),
+        headers: {'accept': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to load user data');
+      }
+    } catch (e) {
+      print('Error fetching user data: $e');
+      return null;
+    }
+  }
+
+  Future<void> loadUserData() async {
+    int? userId = await fetchUserId();
+    if (userId != null) {
+      Map<String, dynamic>? userData = await fetchUserData(userId);
+      if (userData != null) {
+        setState(() {
+          // Update state with fetched user data...
+        });
+      }
+    }
+  }
 
 
 Future<Map<String, dynamic>> fetchUserCarData(int userId) async {
@@ -468,6 +502,50 @@ Future<void> createReservation(String startDateTime, String endDateTime) async {
 }
 
 
+Future<void> sendReceiptEmail({
+  required int? userId,
+  required String startDateTime,
+  required String endDateTime,
+  required String parkingSpotId,
+  required double totalCost,
+  required String vehicleType,
+  required String licensePlate,
+  required String email,
+}) async {
+  final url = Uri.parse('https://api2.parkingtalcahuano.cl/send_receipt_email');
+  
+  final Map<String, dynamic> requestData = {
+    'user_id': userId,
+    'start_date_time': startDateTime,
+    'end_date_time': endDateTime,
+    'parking_spot_id': parkingSpotId,
+    'total_cost': totalCost.toString(),
+    'vehicle_type': vehicleType,
+    'license_plate': licensePlate,
+    'email': userEmail,
+  };
+
+  try {
+    final response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(requestData),
+    );
+
+    if (response.statusCode == 200) {
+      print('Receipt email sent successfully');
+    } else {
+      print('Failed to send receipt email');
+    }
+  } catch (error) {
+    print('Error sending receipt email: $error');
+  }
+}
+
+
+
 
 
 
@@ -530,9 +608,7 @@ Navigator.of(context).push(
         // Accept reservation logic here, e.g., createReservation function
         await createReservation(startDateTime, endDateTime);
         print(userId);
-        print(startDateTime);
-        print(widget.id);
-        print('normal');
+
         // Fetch the user's car information
       Map<String, dynamic> carData = await fetchUserCarData(userId ?? 0);
   
@@ -547,6 +623,16 @@ Navigator.of(context).push(
       licensePlate, // Replace with the actual license plate
       'Reserva', // Replace with any additional notes or an empty string
     );
+      await sendReceiptEmail(
+        userId: userId,
+        startDateTime: startDateTime,
+        endDateTime: endDateTime,
+        parkingSpotId: widget.id,
+        totalCost: double.parse(reservationCost),
+        vehicleType: 'normal',
+        licensePlate: licensePlate,
+        email: 'Reserva',
+      );
 
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(

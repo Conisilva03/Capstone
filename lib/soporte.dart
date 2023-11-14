@@ -18,10 +18,15 @@ class _SoporteScreenState extends State<SoporteScreen> {
   void _enviarCorreo() {
     final mensaje = _textController.text;
 
-    // Aquí puedes agregar el código para enviar el correo con tu solución preferida.
-    // Por ahora, solo mostraremos un mensaje indicando que el correo fue "enviado".
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('Mensaje enviado: $mensaje')));
+    if (mensaje.isNotEmpty) {
+      // Aquí puedes agregar el código para enviar el correo con tu solución preferida.
+      // Por ahora, solo mostraremos un mensaje indicando que el correo fue "enviado".
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Mensaje enviado: $mensaje')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('El mensaje no puede estar vacío')));
+    }
   }
 
   void _contactarWhatsApp() async {

@@ -52,6 +52,41 @@ import 'inicio.dart';
       return userId;
     }
 
+    List<dynamic> fullActiveReservations = [];
+    List<dynamic> fullNonActiveReservations = [];
+
+    Future<void> fetchAllReservations() async {
+      final String apiUrl = 'https://api2.parkingtalcahuano.cl/reservations';
+
+      try {
+          final response = await http.get(
+            Uri.parse(apiUrl),
+            headers: {'accept': 'application/json'},
+          );
+
+          if (response.statusCode == 200) {
+            final List<dynamic> fetchedReservations = json.decode(response.body);
+
+            for (var reservation in fetchedReservations) {
+              if (reservation['is_active']) {
+                fullActiveReservations.add(reservation);
+              } else {
+                fullNonActiveReservations.add(reservation);
+              }
+            }
+
+            setState(() {
+              reservations = fullActiveReservations;
+            });
+          } else {
+            print('Error: ${response.statusCode}');
+          }
+        } catch (e) {
+          print('Error: $e');
+        }
+      }
+
+
     List<dynamic> activeReservations = [];
     List<dynamic> nonActiveReservations = [];
 
@@ -284,6 +319,7 @@ import 'inicio.dart';
       if (userId != null) {
         fetchReservationsForUser(userId);
       }
+      fetchAllReservations();
       getCurrentLocation();
       reservationTimer = Timer.periodic(Duration(minutes: 1), (timer) {
       checkReservationStatus();
@@ -378,17 +414,19 @@ Map<String, dynamic> carData = await fetchUserCarData(userId);
                 ],
               ),
             ),
-            if (!isParkingSpaceAvailable)
+            if (true)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: 8.0),
-                  Text('Tiempo Ocupado:'),
-                  for (var reservation in activeReservations)
+                  Text('Horario de reservas:'),
+                  for (var reservation in fullActiveReservations)
                     if (reservation['parking_spot_id'] == parkingSpace.id)
                       Text(
                         'Desde: ${reservation['start_time']} - Hasta: ${reservation['end_time']}',
                       ),
+                  
+
                 ],
               ),
             Spacer(),
@@ -503,7 +541,7 @@ List<Widget> buildReservations() {
         ? 'Termina ahora'
         : 'Termina en ${timeUntilEnd.inMinutes} minutos';
 
-    // ALERTA COMMENTADA POR ERROR
+    // ALERTA COMMENTADA 
     // showTimerAlert(reservation['id'], reservation['end_time']);
 
     return Card(
@@ -587,7 +625,7 @@ List<Widget> buildReservations() {
       style: ElevatedButton.styleFrom(
         primary: Colors.orange, // Puedes cambiar el color según tus preferencias
       ),
-      child: Text('Enviar Solicitud POST'),
+      child: Text('Bajar rampa'),
     ),
 
               ],
