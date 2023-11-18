@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dark_mode_manager.dart';
+import 'package:provider/provider.dart';
 
 class MisReservasScreen extends StatefulWidget {
   @override
@@ -19,7 +21,8 @@ class _MisReservasScreenState extends State<MisReservasScreen> {
   }
 
   Future<void> fetchReservations() async {
-    final String apiUrl = 'https://api2.parkingtalcahuano.cl/reservations/user/${await fetchUserId()}';
+    final String apiUrl =
+        'https://api2.parkingtalcahuano.cl/reservations/user/${await fetchUserId()}';
 
     try {
       final response = await http.get(
@@ -32,7 +35,7 @@ class _MisReservasScreenState extends State<MisReservasScreen> {
         List<dynamic> activeReservations = [];
 
         for (var reservation in fetchedReservations) {
-            activeReservations.add(reservation);
+          activeReservations.add(reservation);
         }
 
         setState(() {
@@ -48,11 +51,20 @@ class _MisReservasScreenState extends State<MisReservasScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Mis Reservas'),
-      ),
-      body: _buildReservasList(),
+    return Consumer<DarkModeManager>(
+      builder: (context, darkModeManager, child) {
+        return Theme(
+          data: darkModeManager.darkModeEnabled
+              ? ThemeData.dark()
+              : ThemeData.light(),
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text('Mis Reservas'),
+            ),
+            body: _buildReservasList(),
+          ),
+        );
+      },
     );
   }
 

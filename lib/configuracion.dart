@@ -18,7 +18,7 @@ class ConfiguracionScreen extends StatelessWidget {
       theme: theme,
       home: Scaffold(
         appBar: AppBar(
-          title: Text('Configuración'),
+          title: Text('Modificar mi perfil'),
           actions: [
             IconButton(
               icon: Icon(
@@ -56,7 +56,8 @@ class ConfiguracionScreen extends StatelessWidget {
                   // Redireccionar a la pantalla de edición de correo electrónico
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => EmailUpdateScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => EmailUpdateScreen()),
                   );
                 },
                 style: ElevatedButton.styleFrom(

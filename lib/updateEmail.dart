@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'dark_mode_manager.dart';
 
 class UserApi {
   static const baseUrl = 'https://api2.parkingtalcahuano.cl/users';
@@ -113,56 +115,67 @@ class _EmailUpdateScreenState extends State<EmailUpdateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Actualizar Email'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextFormField(
-              controller: emailController,
-              decoration: InputDecoration(labelText: 'Email'),
-              validator: (value) {
-              // Verificar si el correo electrónico es válido
-              if (value == null || value.isEmpty) {
-                return 'El campo de correo electrónico no puede estar vacío';
-              } else if (!RegExp(r'^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$').hasMatch(value)) {
-                return 'Ingrese un correo electrónico válido';
-              }
-              return null; // La validación pasa
-            },
+    return Consumer<DarkModeManager>(
+      builder: (context, darkModeManager, child) {
+        return Theme(
+          data: darkModeManager.darkModeEnabled
+              ? ThemeData.dark()
+              : ThemeData.light(),
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text('Actualizar Email'),
             ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                final email = emailController.text;
-                if (email.isNotEmpty) {
-                  final userApi = UserApi();
-                  final userId = await userApi.fetchUserIdFromEmail(email);
-                  if (userId != null) {
-                    await userApi.updateEmail(userId, email);
-                    Navigator.pop(context);
-                  } else {
-                    print('Failed to fetch user ID.');
-                  }
-                } else {
-                  print('Email no puede ser vacio.');
-                }
-              },
-              child: Text('Actualizar Email'),
+            body: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextFormField(
+                    controller: emailController,
+                    decoration: InputDecoration(labelText: 'Email'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'El campo de correo electrónico no puede estar vacío';
+                      } else if (!RegExp(
+                              r'^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$')
+                          .hasMatch(value)) {
+                        return 'Ingrese un correo electrónico válido';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final email = emailController.text;
+                      if (email.isNotEmpty) {
+                        final userApi = UserApi();
+                        final userId =
+                            await userApi.fetchUserIdFromEmail(email);
+                        if (userId != null) {
+                          await userApi.updateEmail(userId, email);
+                          Navigator.pop(context);
+                        } else {
+                          print('Fallo al obtener el ID del usuario.');
+                        }
+                      } else {
+                        print('El email no puede estar vacío.');
+                      }
+                    },
+                    child: Text('Actualizar Email'),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
-}
 
-void main() {
-  runApp(MaterialApp(
-    home: EmailUpdateScreen(),
-  ));
+  void main() {
+    runApp(MaterialApp(
+      home: EmailUpdateScreen(),
+    ));
+  }
 }
