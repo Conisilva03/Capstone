@@ -6,7 +6,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:async';
 
-
 class RecargarDineroScreen extends StatefulWidget {
   @override
   _RecargarDineroScreenState createState() => _RecargarDineroScreenState();
@@ -43,7 +42,6 @@ class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
     if (response.statusCode == 200) {
       print('Money charged successfully');
       // Call the function to create Webpay transaction
-      await createWebpayTransaction(response);
     } else {
       print('Error charging money: ${response.statusCode}');
       print('Response content: ${response.body}');
@@ -51,7 +49,8 @@ class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
   }
 
   Future<void> createWebpayTransaction(http.Response response) async {
-    final String apiUrl = 'https://api2.parkingtalcahuano.cl/webpay-plus/create';
+    final String apiUrl =
+        'https://api2.parkingtalcahuano.cl/webpay-plus/create';
 
     final Map<String, dynamic> requestData = {
       "buy_order": "buy0201", // Replace with a unique buy_order value
@@ -80,15 +79,14 @@ class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
 
       // Navigate to the WebView screen
       Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (context) => WebViewScreen(
-      key: UniqueKey(),
-      url: responseData["response"]["url"],
-    ),
-  ),
-);
-
+        context,
+        MaterialPageRoute(
+          builder: (context) => WebViewScreen(
+            key: UniqueKey(),
+            url: responseData["response"]["url"],
+          ),
+        ),
+      );
     } else {
       print('Error creating Webpay transaction: ${response.statusCode}');
       print('Response content: ${response.body}');
@@ -107,7 +105,6 @@ class _RecargarDineroScreenState extends State<RecargarDineroScreen> {
           });
         },
       ),
-
     ];
   }
 
@@ -223,13 +220,12 @@ class _WebViewScreenState extends State<WebViewScreen> {
         initialUrl: widget.url,
         javascriptMode: JavascriptMode.unrestricted,
         onWebViewCreated: (WebViewController webViewController) {
-  _controller.complete(webViewController);
-},
-navigationDelegate: (NavigationRequest request) {
-  // Handle redirects or other navigation events
-  return NavigationDecision.navigate;
-},
-
+          _controller.complete(webViewController);
+        },
+        navigationDelegate: (NavigationRequest request) {
+          // Handle redirects or other navigation events
+          return NavigationDecision.navigate;
+        },
       ),
     );
   }

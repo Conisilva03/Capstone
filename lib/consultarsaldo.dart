@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'recargar.dart';
 import 'dark_mode_manager.dart';
-import 'tabs.dart'; // Supongo que 'tabs.dart' define el método 'buildDrawer'
+import 'tabs.dart'; 
 
 class ConsultarSaldoScreen extends StatelessWidget {
   const ConsultarSaldoScreen({Key? key}) : super(key: key);
